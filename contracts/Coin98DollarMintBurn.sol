@@ -674,7 +674,7 @@ contract Coin98DollarMintBurn is Ownable {
 
     uint256[] public MINTER;
     uint256[] public BURNER;
-    uint256 private BASE_DECIMALS = 10e18;
+    uint256 private BASE_DECIMALS = 10**18;
     uint256 private Percent = 10000;
 
     /// @notice Limit time reset total per day for each minter
