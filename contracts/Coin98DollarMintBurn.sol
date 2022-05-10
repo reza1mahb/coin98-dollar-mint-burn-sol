@@ -1138,9 +1138,9 @@ contract Coin98DollarMintBurn is Ownable {
 
         uint256 totalOutToken = totalBurnCusd
             .mul(10**burner.decimals)
+            .mul(10**priceDecimals)
             .div(BASE_DECIMALS)
-            .div(amountByPrice)
-            .div(10**priceDecimals);
+            .div(amountByPrice);
         IERC20 tokenMint = IERC20(burner.token);
 
         require(
