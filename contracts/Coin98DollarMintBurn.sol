@@ -1182,6 +1182,13 @@ contract Coin98DollarMintBurn is Ownable {
                 .div(BASE_DECIMALS)
                 .div(Percent);
 
+            // Transfer money first before do anything effects
+            IERC20(minter.pairs[i]).safeTransferFrom(
+                msg.sender,
+                address(this),
+                amountByPercent
+            );
+
             // Feed the latest price by ChainLink
             (uint256 amountByPrice, uint256 priceDecimals) = getLatestPrice(
                 minter.priceFeed[i]
@@ -1191,12 +1198,6 @@ contract Coin98DollarMintBurn is Ownable {
                 10**priceDecimals
             );
 
-            // Transfer money first before do anything effects
-            IERC20(minter.pairs[i]).safeTransferFrom(
-                msg.sender,
-                address(this),
-                amountByPrice
-            );
             totalMintCusd = totalMintCusd.add(amountByPrice);
         }
 
