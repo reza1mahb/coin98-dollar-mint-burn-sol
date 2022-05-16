@@ -1,4 +1,5 @@
 pragma solidity ^0.8.0;
+// SPDX-License-Identifier: MIT
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -749,8 +750,8 @@ contract Coin98DollarMintBurn is Ownable {
     event Mint(
         uint256 minter,
         address sender,
-        uint256 amountIn,
-        uint256 amountOut,
+        uint256[] amountBurn,
+        uint256 amountMint,
         uint256 exchangeFee,
         uint256 remainingToday
     );
@@ -758,8 +759,8 @@ contract Coin98DollarMintBurn is Ownable {
     event Burn(
         uint256 burner,
         address sender,
-        uint256 amountIn,
-        uint256 amountOut,
+        uint256 amountBurn,
+        uint256 amountMint,
         uint256 exchangeFee,
         uint256 remainingToday
     );
@@ -823,7 +824,7 @@ contract Coin98DollarMintBurn is Ownable {
         view
         returns (uint256, uint256)
     {
-        if (priceFeed == address(0)) return (1, 18);
+        if (priceFeed == address(0)) return (1 ether, 18);
         uint256 decimals = AggregatorV3Interface(priceFeed).decimals();
         (, uint256 price, , , ) = AggregatorV3Interface(priceFeed)
             .latestRoundData();
@@ -850,7 +851,7 @@ contract Coin98DollarMintBurn is Ownable {
         onlyActiveMinter(_id)
     {
         require(
-            _systemFee > 0,
+            _systemFee >= 0,
             "Coin98DollarMintBurn: Fee must be a positive number and greater than zero"
         );
         TokenMinters[_id].systemFee = _systemFee;
@@ -866,7 +867,7 @@ contract Coin98DollarMintBurn is Ownable {
         onlyActiveBurner(_id)
     {
         require(
-            _systemFee > 0,
+            _systemFee >= 0,
             "Coin98DollarMintBurn: Fee must be a positive number and greater than zero"
         );
         TokenBurners[_id].systemFee = _systemFee;
@@ -903,7 +904,7 @@ contract Coin98DollarMintBurn is Ownable {
             );
 
             require(
-                _systemFee > 0,
+                _systemFee >= 0,
                 "Coin98DollarMintBurn: Invalid input amount"
             );
 
@@ -971,10 +972,6 @@ contract Coin98DollarMintBurn is Ownable {
             _token != address(0),
             "Coin98DollarMintBurn: Burner is zero address"
         );
-        require(
-            _priceFeed != address(0),
-            "Coin98DollarMintBurn: Burner is zero address"
-        );
 
         TokenBurner storage burner = TokenBurners[_id];
         // Deactive current burner so no need to check anything here
@@ -986,7 +983,7 @@ contract Coin98DollarMintBurn is Ownable {
             burner.isActive = false;
         } else {
             require(
-                _systemFee > 0,
+                _systemFee >= 0,
                 "Coin98DollarMintBurn: Invalid input amount"
             );
 
@@ -1108,7 +1105,7 @@ contract Coin98DollarMintBurn is Ownable {
         return currentTotalBurnedToday;
     }
 
-    /// @notice Burn cUSD and mint another token (default amount is 18 decimals)
+    /// @notice Burn cUSD and mint another token, based on the amount token wanted to mint
     /// Total burned cUSD must NOT greater than total supply and total supply per day condition
     /// @param _id Bunrer ID to burn with.
     /// @param amount Amount to burn CUSD Token.
@@ -1119,49 +1116,51 @@ contract Coin98DollarMintBurn is Ownable {
         );
         TokenBurner storage burner = TokenBurners[_id];
 
-        uint256 currentTotalBurnedToday = checkTotalBurned(burner, amount);
-
-        // Transfer money first before do anything effects
-        CUSD_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
-        CUSD_TOKEN.burn(amount);
-
-        uint256 systemFee = amount.mul(burner.systemFee).div(Percent);
-        // Update tracking information
-        burner.totalSystemFee = burner.totalSystemFee.add(systemFee);
-
-        // Claim system fee for each exchange cUSD
-        uint256 totalBurnCusd = amount.sub(systemFee);
-
-        (uint256 amountByPrice, uint256 priceDecimals) = getLatestPrice(
+        (uint256 price, uint256 priceDecimals) = getLatestPrice(
             burner.priceFeed
         );
 
-        uint256 totalOutToken = totalBurnCusd
-            .mul(10**burner.decimals)
-            .mul(10**priceDecimals)
-            .div(BASE_DECIMALS)
-            .div(amountByPrice);
+        uint256 amountToBurn = amount
+            .mul(price)
+            .mul(BASE_DECIMALS)
+            .div(10**priceDecimals)
+            .div(10**burner.decimals);
+
+        uint256 currentTotalBurnedToday = checkTotalBurned(
+            burner,
+            amountToBurn
+        );
+
+        // Transfer money first before do anything effects
+        CUSD_TOKEN.safeTransferFrom(msg.sender, address(this), amountToBurn);
+        CUSD_TOKEN.burn(amountToBurn);
+
+        // Update tracking information
+        uint256 systemFee = amount.mul(burner.systemFee).div(Percent);
+        burner.totalSystemFee = burner.totalSystemFee.add(systemFee);
+
         IERC20 tokenMint = IERC20(burner.token);
+        uint256 amountToMint = amount.sub(systemFee);
 
         require(
-            totalOutToken > 0 &&
-                tokenMint.balanceOf(address(this)) >= totalOutToken,
+            amountToMint > 0 &&
+                tokenMint.balanceOf(address(this)) >= amountToMint,
             "Coin98DollarMintBurn: Not enough balance to mint or invalid amount"
         );
 
-        tokenMint.safeTransfer(msg.sender, totalOutToken);
+        tokenMint.safeTransfer(msg.sender, amountToMint);
 
         emit Burn(
             _id,
             msg.sender,
-            amount,
-            totalOutToken,
+            amountToBurn,
+            amountToMint,
             systemFee,
             currentTotalBurnedToday
         );
     }
 
-    /// @notice Mint cUSD with amount split based by percent in couple tokens of minter (default amount is 18 decimals)
+    /// @notice Mint cUSD with amount of cUSD wanted to mint. Amount will be splited based on percent in couple tokens of minter (default amount is 18 decimals)
     /// Current platform not accepted main wrapped token like WETH, WBNB
     /// Total minted cUSD must NOT greater than total supply and total supply per day condition
     /// @param _id Minter ID to mint with.
@@ -1172,60 +1171,57 @@ contract Coin98DollarMintBurn is Ownable {
             "Coin98DollarMintBurn: Amount must be a positive number and greater than zero"
         );
         TokenMinter storage minter = TokenMinters[_id];
-        uint256 totalMintCusd;
+
+        uint256 currentTotalMintedToday = checkTotalMinted(minter, amount);
+
+        uint256[] memory amountToTransfer = new uint256[](minter.pairs.length);
 
         for (uint256 i = 0; i < minter.pairs.length; i++) {
             uint256 tokenDecimals = minter.decimals[i];
-            uint256 amountByPercent = amount
+            uint256 valueByPercent = amount.mul(minter.percents[i]).div(
+                Percent
+            );
+
+            // Feed the latest price by ChainLink
+            (uint256 price, uint256 priceDecimals) = getLatestPrice(
+                minter.priceFeed[i]
+            );
+
+            uint256 amountToBurn = valueByPercent
                 .mul(10**tokenDecimals)
-                .mul(minter.percents[i])
-                .div(BASE_DECIMALS)
-                .div(Percent);
+                .div(price)
+                .mul(10**priceDecimals)
+                .div(BASE_DECIMALS);
 
             // Transfer money first before do anything effects
             IERC20(minter.pairs[i]).safeTransferFrom(
                 msg.sender,
                 address(this),
-                amountByPercent
+                amountToBurn
             );
-
-            // Feed the latest price by ChainLink
-            (uint256 amountByPrice, uint256 priceDecimals) = getLatestPrice(
-                minter.priceFeed[i]
-            );
-
-            amountByPrice = amountByPrice.mul(amountByPercent).div(
-                10**priceDecimals
-            );
-
-            totalMintCusd = totalMintCusd.add(amountByPrice);
+            amountToTransfer[i] = amountToBurn;
         }
 
-        uint256 currentTotalMintedToday = checkTotalMinted(
-            minter,
-            totalMintCusd
-        );
-
-        uint256 systemFee = totalMintCusd.mul(minter.systemFee).div(Percent);
+        uint256 systemFee = amount.mul(minter.systemFee).div(Percent);
         // Update tracking information
         minter.totalSystemFee = minter.totalSystemFee.add(systemFee);
 
         // Claim system fee for each exchange cUSD
-        totalMintCusd = totalMintCusd.sub(systemFee);
+        amount = amount.sub(systemFee);
 
         require(
-            totalMintCusd > 0,
+            amount > 0,
             "Coin98DollarMintBurn: Total Mint must be a positive number and greater than zero"
         );
 
         // Mint CUSD Token to .sender
-        CUSD_TOKEN.mint(msg.sender, totalMintCusd);
+        CUSD_TOKEN.mint(msg.sender, amount);
 
         emit Mint(
             _id,
             msg.sender,
+            amountToTransfer,
             amount,
-            totalMintCusd,
             systemFee,
             currentTotalMintedToday
         );
