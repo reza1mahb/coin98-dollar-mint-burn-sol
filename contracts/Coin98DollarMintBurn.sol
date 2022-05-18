@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 // SPDX-License-Identifier: MIT
 
 /*
@@ -23,7 +23,7 @@ abstract contract Context {
 
 // File: @openzeppelin/contracts/access/Ownable.sol
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -92,7 +92,7 @@ abstract contract Ownable is Context {
 
 // File: @openzeppelin/contracts/math/SafeMath.sol
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -264,7 +264,7 @@ library SafeMath {
 
 // File: @openzeppelin/contracts/utils/Address.sol
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 
 /**
  * @dev Collection of functions related to the address type
@@ -650,7 +650,7 @@ library SafeERC20 {
     }
 }
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 
 interface AggregatorV3Interface {
     function decimals() external view returns (uint8);
