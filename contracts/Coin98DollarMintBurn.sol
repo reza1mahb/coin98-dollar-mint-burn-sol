@@ -1059,11 +1059,9 @@ contract Coin98DollarMintBurn is Ownable {
         returns (uint256)
     {
         uint256 diffHours = (block.timestamp - minter.lastExchange) / 60 / 60;
-
+        bool isOverTime = diffHours >= LIMIT_TIME;
         uint256 currentTotalMinted = minter.totalMinted.add(amount);
-        uint256 currentTotalMintedToday = diffHours >= LIMIT_TIME
-            ? 0
-            : minter.totalPerDay;
+        uint256 currentTotalMintedToday = isOverTime ? 0 : minter.totalPerDay;
         currentTotalMintedToday = currentTotalMintedToday.add(amount);
 
         require(
@@ -1075,7 +1073,9 @@ contract Coin98DollarMintBurn is Ownable {
         // Update tracking information
         minter.totalMinted = currentTotalMinted;
         minter.totalPerDay = currentTotalMintedToday;
-        minter.lastExchange = block.timestamp;
+        if (isOverTime) {
+            minter.lastExchange = block.timestamp;
+        }
         return currentTotalMintedToday;
     }
 
@@ -1085,11 +1085,10 @@ contract Coin98DollarMintBurn is Ownable {
         returns (uint256)
     {
         uint256 diffHours = (block.timestamp - burner.lastExchange) / 60 / 60;
+        bool isOverTime = diffHours >= LIMIT_TIME;
 
         uint256 currentTotalBurned = burner.totalBurned.add(amount);
-        uint256 currentTotalBurnedToday = diffHours >= LIMIT_TIME
-            ? 0
-            : burner.totalPerDay;
+        uint256 currentTotalBurnedToday = isOverTime ? 0 : burner.totalPerDay;
         currentTotalBurnedToday = currentTotalBurnedToday.add(amount);
 
         require(
@@ -1101,7 +1100,9 @@ contract Coin98DollarMintBurn is Ownable {
         // Update tracking information
         burner.totalBurned = currentTotalBurned;
         burner.totalPerDay = currentTotalBurnedToday;
-        burner.lastExchange = block.timestamp;
+        if (isOverTime) {
+            burner.lastExchange = block.timestamp;
+        }
         return currentTotalBurnedToday;
     }
 
