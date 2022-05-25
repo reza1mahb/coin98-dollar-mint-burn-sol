@@ -747,6 +747,9 @@ contract Coin98DollarMintBurn is Ownable {
     /// @notice Mapping ID for each burner
     mapping(uint256 => TokenBurner) public TokenBurners;
 
+    /// @notice Withdraw token from Coin98 Dollar MintBurn
+    event WithdrawToken(address[] token);
+
     event Mint(
         uint256 minter,
         address sender,
@@ -833,7 +836,7 @@ contract Coin98DollarMintBurn is Ownable {
 
     /// @notice Update Limit Time reset per day for each minter
     /// @param _limitTime The amount of exchange fee
-    function setLimitTime(uint256 _limitTime) public onlyOwner {
+    function setLimitTime(uint256 _limitTime) external onlyOwner {
         require(
             _limitTime > 0,
             "Coin98DollarMintBurn: Limit time must be a positive number and greater than zero"
@@ -846,7 +849,7 @@ contract Coin98DollarMintBurn is Ownable {
     /// @notice Update System Fee of minter
     /// @param _systemFee The amount of exchange fee
     function setExchangeFee(uint256 _id, uint256 _systemFee)
-        public
+        external
         onlyOwner
         onlyActiveMinter(_id)
     {
@@ -862,7 +865,7 @@ contract Coin98DollarMintBurn is Ownable {
     /// @notice Update System Fee for burner
     /// @param _systemFee The amount of exchange fee
     function setExchangeFeeBurner(uint256 _id, uint256 _systemFee)
-        public
+        external
         onlyOwner
         onlyActiveBurner(_id)
     {
@@ -884,7 +887,7 @@ contract Coin98DollarMintBurn is Ownable {
         uint256[] calldata _percents,
         address[] calldata _priceFeed,
         uint256 _systemFee
-    ) public onlyOwner {
+    ) external onlyOwner {
         uint256 sizePair = _pairs.length;
         TokenMinter storage minter = TokenMinters[_id];
         // Deactive current minter, no need to check anything here
@@ -967,7 +970,7 @@ contract Coin98DollarMintBurn is Ownable {
         uint256 _decimals,
         address _priceFeed,
         uint256 _systemFee
-    ) public onlyOwner {
+    ) external onlyOwner {
         require(
             _token != address(0),
             "Coin98DollarMintBurn: Burner is zero address"
@@ -1018,7 +1021,7 @@ contract Coin98DollarMintBurn is Ownable {
         uint256 _id,
         uint256 _totalSupply,
         uint256 _totalSupplyPerDay
-    ) public onlyOwner {
+    ) external onlyOwner {
         TokenMinter storage minter = TokenMinters[_id];
         require(minter.isActive, "Coin98DollarMintBurn: Minter not existed");
 
@@ -1038,7 +1041,7 @@ contract Coin98DollarMintBurn is Ownable {
         uint256 _id,
         uint256 _totalSupply,
         uint256 _totalSupplyPerDay
-    ) public onlyOwner {
+    ) external onlyOwner {
         TokenBurner storage burner = TokenBurners[_id];
         require(burner.isActive, "Coin98DollarMintBurn: Burner not existed");
 
@@ -1110,7 +1113,7 @@ contract Coin98DollarMintBurn is Ownable {
     /// Total burned cUSD must NOT greater than total supply and total supply per day condition
     /// @param _id Bunrer ID to burn with.
     /// @param amount Amount to burn CUSD Token.
-    function burn(uint256 _id, uint256 amount) public onlyActiveBurner(_id) {
+    function burn(uint256 _id, uint256 amount) external onlyActiveBurner(_id) {
         require(
             amount > 0,
             "Coin98DollarMintBurn: Amount must be a positive number and greater than zero"
@@ -1179,19 +1182,18 @@ contract Coin98DollarMintBurn is Ownable {
 
         for (uint256 i = 0; i < minter.pairs.length; i++) {
             uint256 tokenDecimals = minter.decimals[i];
-            uint256 valueByPercent = amount.mul(minter.percents[i]).div(
-                Percent
-            );
 
             // Feed the latest price by ChainLink
             (uint256 price, uint256 priceDecimals) = getLatestPrice(
                 minter.priceFeed[i]
             );
 
-            uint256 amountToBurn = valueByPercent
+            uint256 amountToBurn = amount
+                .mul(minter.percents[i])
                 .mul(10**tokenDecimals)
-                .div(price)
                 .mul(10**priceDecimals)
+                .div(Percent)
+                .div(price)
                 .div(BASE_DECIMALS);
 
             // Transfer money first before do anything effects
@@ -1230,7 +1232,7 @@ contract Coin98DollarMintBurn is Ownable {
 
     /// @notice Withdraw all token and main token
     /// @param tokens The token contract that want to withdraw
-    function withdrawMultiple(address[] calldata tokens) public onlyOwner {
+    function withdrawMultiple(address[] calldata tokens) external onlyOwner {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i] == address(0)) {
                 payable(msg.sender).transfer(address(this).balance);
@@ -1243,5 +1245,6 @@ contract Coin98DollarMintBurn is Ownable {
                 }
             }
         }
+        emit WithdrawToken(tokens);
     }
 }
