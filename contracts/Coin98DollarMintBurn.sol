@@ -1188,10 +1188,12 @@ contract Coin98DollarMintBurn is Ownable {
                 minter.priceFeed[i]
             );
 
-            uint256 amountToBurn = amount
+            uint256 mulValue = amount
                 .mul(minter.percents[i])
                 .mul(10**tokenDecimals)
-                .mul(10**priceDecimals)
+                .mul(10**priceDecimals);
+
+            uint256 amountToBurn = mulValue
                 .div(Percent)
                 .div(price)
                 .div(BASE_DECIMALS);
