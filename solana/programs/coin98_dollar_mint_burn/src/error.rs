@@ -5,4 +5,7 @@ pub enum ErrorCode {
 
   #[msg("CUSD Factory: Invalid input.")]
   InvalidInput,
+
+  #[msg("CUSD Factory: Unauthorized")]
+  Unauthorized,
 }
