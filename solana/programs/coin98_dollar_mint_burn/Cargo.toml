@@ -17,8 +17,5 @@ no-idl = []
 no-log-ix-name = []
 
 [lib]
-name = "vault"
+name = "coin98_dollar_mint_burn"
 crate-type = ["cdylib", "lib"]
-
-[profile.release]
-overflow-checks = true
