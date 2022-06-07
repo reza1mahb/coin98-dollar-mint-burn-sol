@@ -1,8 +1,20 @@
 use anchor_lang::prelude::*;
+use crate::error::{
+  ErrorCode,
+};
 use crate::state::{
   AppData,
   Burner,
   Minter,
+};
+use crate::external::chainlink_solana::{
+  is_chainlink_program,
+};
+use crate::external::cusd_token_mint::{
+  is_cusd_token_mint,
+};
+use crate::external::spl_token::{
+  is_token_program,
 };
 
 #[derive(Accounts)]
@@ -71,6 +83,58 @@ pub struct SetBurnerContext<'info> {
 
   #[account(mut)]
   pub burner: Account<'info, Burner>,
+}
+
+#[derive(Accounts)]
+pub struct MintContext<'info> {
+
+  /// CHECK: user account
+  #[account(signer)]
+  pub user: AccountInfo<'info>,
+
+  #[account(
+    seeds = [
+      &[8, 201, 24, 140, 93, 100, 30, 148][..],
+      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+    ],
+    bump = app_data.nonce,
+  )]
+  pub app_data: Account<'info, AppData>,
+
+  /// CHECK: PDA as root authority of the program
+  #[account(
+    seeds = [
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+    ],
+    bump,
+  )]
+  pub root_signer: AccountInfo<'info>,
+
+  /// CHECK: CUSD Token Mint
+  #[account(
+    constraint = is_cusd_token_mint(&cusd_mint) @ErrorCode::InvalidAccount,
+  )]
+  pub cusd_mint: AccountInfo<'info>,
+
+  /// CHECK: Account to receive CUSD
+  #[account(mut)]
+  pub recipient: AccountInfo<'info>,
+
+  #[account(mut)]
+  pub minter: Account<'info, Minter>,
+
+  /// CHECK: Chainlink program
+  #[account(
+    constraint = is_chainlink_program(&chainlink_program) @ErrorCode::InvalidAccount,
+  )]
+  pub chainlink_program: AccountInfo<'info>,
+
+  /// CHECK: Solana native Token Program
+  #[account(
+    constraint = is_token_program(&token_program) @ErrorCode::InvalidAccount,
+  )]
+  pub token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
