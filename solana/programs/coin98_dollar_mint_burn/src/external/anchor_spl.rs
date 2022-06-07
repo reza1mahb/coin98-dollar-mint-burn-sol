@@ -7,10 +7,48 @@ use solana_program::{
     invoke,
     invoke_signed,
   },
+  program_pack::{
+    Pack,
+  },
 };
+use std::ops::{
+  Deref,
+};
+use crate::external::spl_token;
 use crate::external::spl_token::{
   ID as TOKEN_PROGRAM_ID,
 };
+
+#[derive(Clone)]
+pub struct TokenAccount(spl_token::TokenAccount);
+
+impl TokenAccount {
+  pub const LEN: usize = spl_token::TokenAccount::LEN;
+}
+
+impl anchor_lang::AccountDeserialize for TokenAccount {
+  fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
+    spl_token::TokenAccount::unpack(buf)
+      .map(TokenAccount)
+      .map_err(Into::into)
+  }
+}
+
+impl anchor_lang::AccountSerialize for TokenAccount {}
+
+impl anchor_lang::Owner for TokenAccount {
+  fn owner() -> Pubkey {
+    spl_token::ID
+  }
+}
+
+impl Deref for TokenAccount {
+  type Target = spl_token::TokenAccount;
+
+  fn deref(&self) -> &Self::Target {
+      &self.0
+  }
+}
 
 pub fn mint_token<'i>(
   authority: &AccountInfo<'i>,

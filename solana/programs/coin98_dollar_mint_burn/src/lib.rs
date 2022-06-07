@@ -127,8 +127,8 @@ pub mod coin98_dollar_mint_burn {
     Ok(())
   }
 
-  pub fn mint<'i>(
-    ctx: Context<'_, '_, '_, 'i, MintContext<'i>>,
+  pub fn mint<'a>(
+    ctx: Context<'_, '_, '_, 'a, MintContext<'a>>,
     amount: u64,
     extra_instructions: Vec<u8>,
   ) -> Result<()> {
@@ -142,7 +142,7 @@ pub mod coin98_dollar_mint_burn {
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
-    let timestamp_per_period = app_data.limit * 3600;
+    let timestamp_per_period = i64::from(app_data.limit) * 3600;
     let is_in_period = minter.last_period_timestamp + timestamp_per_period < current_timestamp;
     let current_period_minted_amount = if is_in_period { minter.per_period_minted_amount } else { 0u64 };
 
@@ -165,9 +165,9 @@ pub mod coin98_dollar_mint_burn {
     for (i, _address) in minter.input_tokens.iter().enumerate() {
       let price_feed = &accounts[i];
       let (price, precision) = get_price_feed(
-        &*chainlink_program,
-        &*price_feed,
-      );
+          &*chainlink_program,
+          &*price_feed,
+        );
       let value_contrib = minter.input_percentages[i];
 
       let input_amount = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap()
@@ -187,7 +187,7 @@ pub mod coin98_dollar_mint_burn {
 
     let minter = &mut ctx.accounts.minter;
     minter.total_minted_amount = minter.total_minted_amount + amount;
-    minter.per_period_minted_limit = minter.total_minted_amount + current_period_minted_amount + amount;
+    minter.per_period_minted_limit = current_period_minted_amount + amount;
     if !is_in_period {
       minter.last_period_timestamp = current_timestamp;
     }
@@ -210,6 +210,77 @@ pub mod coin98_dollar_mint_burn {
         &[&seeds],
       )
       .expect("CUSD Factory: CPI failed.");
+
+    Ok(())
+  }
+
+  pub fn burn(
+    ctx: Context<BurnContext>,
+    amount: u64,
+  ) -> Result<()> {
+
+    let user = &ctx.accounts.user;
+    let app_data = &ctx.accounts.app_data;
+    let burner = &ctx.accounts.burner;
+
+    if !burner.is_active {
+      return Err(ErrorCode::Unavailable.into());
+    }
+
+    let current_timestamp = Clock::get().unwrap().unix_timestamp;
+    let timestamp_per_period = i64::from(app_data.limit) * 3600;
+    let is_in_period = burner.last_period_timestamp + timestamp_per_period < current_timestamp;
+    let current_period_burned_amount = if is_in_period { burner.per_period_burned_amount } else { 0u64 };
+
+    if current_period_burned_amount + amount > burner.per_period_burned_limit {
+      return Err(ErrorCode::LimitReached.into());
+    }
+    if burner.total_burned_amount + amount > burner.total_burned_limit {
+      return Err(ErrorCode::LimitReached.into());
+    }
+
+    let chainlink_program = &ctx.accounts.chainlink_program;
+    let price_feed = &ctx.accounts.price_feed;
+    let (price, precision) = get_price_feed(
+        &*chainlink_program,
+        &*price_feed,
+      );
+    let output_amount = amount.checked_mul(precision).unwrap().checked_div(price).unwrap();
+
+    let pool_cusd = &ctx.accounts.pool_cusd;
+    let user_cusd = &ctx.accounts.user_cusd;
+    transfer_token(
+        &*user,
+        &user_cusd.to_account_info(),
+        &pool_cusd.to_account_info(),
+        amount,
+        &[],
+      )
+      .expect("CUSD Factory: CPI failed.");
+
+    let burner = &mut ctx.accounts.burner;
+    burner.total_burned_amount = burner.total_burned_amount + amount;
+    burner.per_period_burned_limit = current_period_burned_amount + amount;
+    if !is_in_period {
+      burner.last_period_timestamp = current_timestamp;
+    }
+
+    let seeds: &[&[u8]] = &[
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      &[app_data.signer_nonce],
+    ];
+    let root_signer = &ctx.accounts.root_signer;
+    let pool_token = &ctx.accounts.pool_token;
+    let user_token = &ctx.accounts.user_token;
+    transfer_token(
+      &*root_signer,
+      &pool_token.to_account_info(),
+      &user_token.to_account_info(),
+      output_amount,
+      &[&seeds],
+    )
+    .expect("CUSD Factory: CPI failed.");
 
     Ok(())
   }
@@ -237,7 +308,7 @@ pub mod coin98_dollar_mint_burn {
   #[access_control(is_root(*ctx.accounts.root.key))]
   pub fn set_app_data(
     ctx: Context<SetAppDataContext>,
-    limit: i64,
+    limit: u32,
   ) -> Result<()> {
 
     let app_data = &mut ctx.accounts.app_data;

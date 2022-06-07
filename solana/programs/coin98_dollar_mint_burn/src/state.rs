@@ -4,11 +4,11 @@ use anchor_lang::prelude::*;
 pub struct AppData {
   pub nonce: u8,
   pub signer_nonce: u8,
-  pub limit: i64,
+  pub limit: u32,
 }
 
 impl AppData {
-  pub const LEN: usize = 1 + 1 + 8;
+  pub const LEN: usize = 1 + 1 + 4;
 }
 
 #[account]
