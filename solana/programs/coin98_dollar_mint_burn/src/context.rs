@@ -7,8 +7,9 @@ use crate::state::{
   Burner,
   Minter,
 };
-use crate::external::anchor_spl::{
+use crate::external::anchor_token::{
   TokenAccount,
+  TokenMint,
 };
 use crate::external::chainlink_solana::{
   is_chainlink_program,
@@ -222,6 +223,73 @@ pub struct BurnContext<'info> {
     constraint = is_token_program(&token_program) @ErrorCode::InvalidAccount,
   )]
   pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawTokenContext<'info> {
+
+  /// CHECK: program owner, verified using #access_control
+  #[account(signer, mut)]
+  pub root: AccountInfo<'info>,
+
+  #[account(
+    seeds = [
+      &[8, 201, 24, 140, 93, 100, 30, 148][..],
+      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+    ],
+    bump = app_data.nonce,
+  )]
+  pub app_data: Account<'info, AppData>,
+
+  /// CHECK: PDA as root authority of the program
+  #[account(
+    seeds = [
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+    ],
+    bump,
+  )]
+  pub root_signer: AccountInfo<'info>,
+
+  #[account(
+    constraint = pool_token.owner == root_signer.key() @ErrorCode::InvalidAccount,
+  )]
+  pub pool_token: Account<'info, TokenAccount>,
+
+  pub recipient_token: Account<'info, TokenAccount>,
+}
+
+#[derive(Accounts)]
+pub struct UnlockTokenMintContext<'info> {
+
+  /// CHECK: program owner, verified using #access_control
+  #[account(signer, mut)]
+  pub root: AccountInfo<'info>,
+
+  #[account(
+    seeds = [
+      &[8, 201, 24, 140, 93, 100, 30, 148][..],
+      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+    ],
+    bump = app_data.nonce,
+  )]
+  pub app_data: Account<'info, AppData>,
+
+  /// CHECK: PDA as root authority of the program
+  #[account(
+    seeds = [
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+    ],
+    bump,
+  )]
+  pub root_signer: AccountInfo<'info>,
+
+  /// CHECK: TokenMint under root_signer authority
+  #[account(
+    constraint = token_mint.mint_authority.contains(&root_signer.key()) @ErrorCode::InvalidAccount,
+  )]
+  pub token_mint: Account<'info, TokenMint>,
 }
 
 #[derive(Accounts)]

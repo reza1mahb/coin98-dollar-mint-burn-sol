@@ -5,6 +5,11 @@ pub mod state;
 pub mod external;
 
 use anchor_lang::prelude::*;
+use solana_program::{
+  program_pack::{
+    Pack,
+  },
+};
 use crate::constant::{
   ROOT_KEYS,
 };
@@ -12,12 +17,17 @@ use crate::context::*;
 use crate::error::{
   ErrorCode,
 };
-use crate::external::anchor_spl::{
+use crate::external::anchor_token::{
+  burn_token,
   mint_token,
+  transfer_authority,
   transfer_token,
 };
 use crate::external::chainlink_solana::{
   get_price_feed,
+};
+use crate::external::spl_token::{
+  TokenAccount,
 };
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
@@ -135,6 +145,7 @@ pub mod coin98_dollar_mint_burn {
 
     let user = &ctx.accounts.user;
     let app_data = &ctx.accounts.app_data;
+    let root_signer = &ctx.accounts.root_signer;
     let minter = &ctx.accounts.minter;
 
     if !minter.is_active {
@@ -162,8 +173,12 @@ pub mod coin98_dollar_mint_burn {
       })
       .collect();
 
-    for (i, _address) in minter.input_tokens.iter().enumerate() {
+    for (i, input_token) in minter.input_tokens.iter().enumerate() {
+      let input_price_feed = &minter.input_price_feeds[i];
       let price_feed = &accounts[i];
+      if price_feed.key() != *input_price_feed {
+        return Err(ErrorCode::InvalidAccount.into());
+      }
       let (price, precision) = get_price_feed(
           &*chainlink_program,
           &*price_feed,
@@ -175,6 +190,17 @@ pub mod coin98_dollar_mint_burn {
 
       let from_account_index = account_indices[2*i + 1];
       let to_account_index = account_indices[2*i + 2];
+      let from_account = &accounts[from_account_index];
+      let from_account = TokenAccount::unpack_from_slice(&from_account.try_borrow_data().unwrap()).unwrap();
+      let to_account = &accounts[to_account_index];
+      let to_account = TokenAccount::unpack_from_slice(&to_account.try_borrow_data().unwrap()).unwrap();
+      if from_account.mint != *input_token {
+        return Err(ErrorCode::InvalidAccount.into());
+      }
+      if to_account.mint != *input_token || to_account.owner != root_signer.key() {
+        return Err(ErrorCode::InvalidAccount.into());
+      }
+
       transfer_token(
           &*user,
           &accounts[from_account_index],
@@ -194,7 +220,6 @@ pub mod coin98_dollar_mint_burn {
 
     let cusd_mint = &ctx.accounts.cusd_mint;
     let recipient = &ctx.accounts.recipient;
-    let root_signer = &ctx.accounts.root_signer;
 
     let seeds: &[&[u8]] = &[
       &[2, 151, 229, 53, 244, 77, 229, 7][..],
@@ -258,29 +283,92 @@ pub mod coin98_dollar_mint_burn {
       )
       .expect("CUSD Factory: CPI failed.");
 
+    let root_signer = &ctx.accounts.root_signer;
+    let cusd_mint = &ctx.accounts.cusd_mint;
+    let seeds: &[&[u8]] = &[
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      &[app_data.signer_nonce],
+    ];
+    burn_token(
+        &*root_signer,
+        &*cusd_mint,
+        &pool_cusd.to_account_info(),
+        amount,
+        &[&seeds],
+      )
+      .expect("CUSD Factory: CPI failed.");
+
     let burner = &mut ctx.accounts.burner;
     burner.total_burned_amount = burner.total_burned_amount + amount;
     burner.per_period_burned_limit = current_period_burned_amount + amount;
     if !is_in_period {
       burner.last_period_timestamp = current_timestamp;
     }
+    let pool_token = &ctx.accounts.pool_token;
+    let user_token = &ctx.accounts.user_token;
+    transfer_token(
+        &*root_signer,
+        &pool_token.to_account_info(),
+        &user_token.to_account_info(),
+        output_amount,
+        &[&seeds],
+      )
+      .expect("CUSD Factory: CPI failed.");
 
+    Ok(())
+  }
+
+  #[access_control(is_root(*ctx.accounts.root.key))]
+  pub fn withdraw_token(
+    ctx: Context<WithdrawTokenContext>,
+    amount: u64,
+  ) -> Result<()> {
+
+    let app_data = &ctx.accounts.app_data;
+    let root_signer = &ctx.accounts.root_signer;
+    let pool_token = &ctx.accounts.pool_token;
+    let recipient_token = &ctx.accounts.recipient_token;
     let seeds: &[&[u8]] = &[
       &[2, 151, 229, 53, 244, 77, 229, 7][..],
       &[68, 203, 0, 94, 226, 230, 93, 156][..],
       &[app_data.signer_nonce],
     ];
-    let root_signer = &ctx.accounts.root_signer;
-    let pool_token = &ctx.accounts.pool_token;
-    let user_token = &ctx.accounts.user_token;
+
     transfer_token(
-      &*root_signer,
-      &pool_token.to_account_info(),
-      &user_token.to_account_info(),
-      output_amount,
-      &[&seeds],
-    )
-    .expect("CUSD Factory: CPI failed.");
+        &*root_signer,
+        &pool_token.to_account_info(),
+        &recipient_token.to_account_info(),
+        amount,
+        &[&seeds],
+      )
+      .expect("CUSD Factory: CPI failed.");
+
+    Ok(())
+  }
+
+  #[access_control(is_root(*ctx.accounts.root.key))]
+  pub fn unlock_token_mint(
+    ctx: Context<UnlockTokenMintContext>,
+  ) -> Result<()> {
+
+    let root = &ctx.accounts.root;
+    let app_data = &ctx.accounts.app_data;
+    let root_signer = &ctx.accounts.root_signer;
+    let token_mint = &ctx.accounts.token_mint;
+    let seeds: &[&[u8]] = &[
+      &[2, 151, 229, 53, 244, 77, 229, 7][..],
+      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      &[app_data.signer_nonce],
+    ];
+    transfer_authority(
+        &*root_signer,
+        &token_mint.to_account_info(),
+        0,
+        &*root,
+        &[&seeds],
+      )
+      .expect("CUSD Factory: CPI failed.");
 
     Ok(())
   }
