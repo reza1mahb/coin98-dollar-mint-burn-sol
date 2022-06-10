@@ -117,12 +117,13 @@ pub struct MintContext<'info> {
       ROOT_SIGNER_SEED_1,
       ROOT_SIGNER_SEED_2,
     ],
-    bump,
+    bump = app_data.signer_nonce,
   )]
   pub root_signer: AccountInfo<'info>,
 
   /// CHECK: CUSD Token Mint
   #[account(
+    mut,
     constraint = is_cusd_token_mint(&cusd_mint) @ErrorCode::InvalidAccount,
   )]
   pub cusd_mint: AccountInfo<'info>,
@@ -169,12 +170,13 @@ pub struct BurnContext<'info> {
       ROOT_SIGNER_SEED_1,
       ROOT_SIGNER_SEED_2,
     ],
-    bump,
+    bump = app_data.signer_nonce,
   )]
   pub root_signer: AccountInfo<'info>,
 
   /// CHECK: CUSD Token Mint
   #[account(
+    mut,
     constraint = is_cusd_token_mint(&cusd_mint) @ErrorCode::InvalidAccount,
   )]
   pub cusd_mint: AccountInfo<'info>,
@@ -184,17 +186,17 @@ pub struct BurnContext<'info> {
 
   /// CHECK: Pool CUSD token account
   #[account(
+    mut,
     constraint = pool_cusd.owner == root_signer.key() @ErrorCode::InvalidAccount,
     constraint = pool_cusd.mint == cusd_mint.key() @ErrorCode::InvalidAccount,
   )]
-  #[account(mut)]
   pub pool_cusd: Account<'info, TokenAccount>,
 
   /// CHECK: User CUSD token account
   #[account(
+    mut,
     constraint = user_cusd.mint == cusd_mint.key() @ErrorCode::InvalidAccount,
   )]
-  #[account(mut)]
   pub user_cusd: Account<'info, TokenAccount>,
 
   /// CHECK: Chainlink program
@@ -214,7 +216,7 @@ pub struct BurnContext<'info> {
 pub struct WithdrawTokenContext<'info> {
 
   /// CHECK: program owner, verified using #access_control
-  #[account(signer, mut)]
+  #[account(signer)]
   pub root: AccountInfo<'info>,
 
   #[account(
@@ -232,15 +234,17 @@ pub struct WithdrawTokenContext<'info> {
       ROOT_SIGNER_SEED_1,
       ROOT_SIGNER_SEED_2,
     ],
-    bump,
+    bump = app_data.signer_nonce,
   )]
   pub root_signer: AccountInfo<'info>,
 
   #[account(
+    mut,
     constraint = pool_token.owner == root_signer.key() @ErrorCode::InvalidAccount,
   )]
   pub pool_token: Account<'info, TokenAccount>,
 
+  #[account(mut)]
   pub recipient_token: Account<'info, TokenAccount>,
 }
 
@@ -248,7 +252,7 @@ pub struct WithdrawTokenContext<'info> {
 pub struct UnlockTokenMintContext<'info> {
 
   /// CHECK: program owner, verified using #access_control
-  #[account(signer, mut)]
+  #[account(signer)]
   pub root: AccountInfo<'info>,
 
   #[account(
@@ -266,12 +270,13 @@ pub struct UnlockTokenMintContext<'info> {
       ROOT_SIGNER_SEED_1,
       ROOT_SIGNER_SEED_2,
     ],
-    bump,
+    bump = app_data.signer_nonce,
   )]
   pub root_signer: AccountInfo<'info>,
 
   /// CHECK: TokenMint under root_signer authority
   #[account(
+    mut,
     constraint = token_mint.mint_authority.contains(&root_signer.key()) @ErrorCode::InvalidAccount,
   )]
   pub token_mint: Account<'info, TokenMint>,

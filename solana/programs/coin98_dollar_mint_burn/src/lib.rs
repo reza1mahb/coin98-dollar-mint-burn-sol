@@ -63,9 +63,9 @@ pub mod coin98_dollar_mint_burn {
     input_decimals: Vec<u8>,
     input_percentages: Vec<u16>,
     input_price_feeds: Vec<Pubkey>,
+    fee_percent: u16,
     total_minted_limit: u64,
     per_period_minted_limit: u64,
-    fee_percent: u16,
   ) -> Result<()> {
 
     if input_tokens.len() != input_decimals.len() {
