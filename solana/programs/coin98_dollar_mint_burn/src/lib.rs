@@ -17,7 +17,7 @@ use crate::context::*;
 use crate::error::{
   ErrorCode,
 };
-use crate::external::anchor_token::{
+use crate::external::anchor_spl_token::{
   burn_token,
   mint_token,
   transfer_authority,
@@ -239,8 +239,8 @@ pub mod coin98_dollar_mint_burn {
     Ok(())
   }
 
-  pub fn burn(
-    ctx: Context<BurnContext>,
+  pub fn burn<'a>(
+    ctx: Context<'_, '_, '_, 'a, BurnContext<'a>>,
     amount: u64,
   ) -> Result<()> {
 
@@ -265,7 +265,8 @@ pub mod coin98_dollar_mint_burn {
     }
 
     let chainlink_program = &ctx.accounts.chainlink_program;
-    let price_feed = &ctx.accounts.price_feed;
+    let accounts = &ctx.remaining_accounts;
+    let price_feed = &accounts[0];
     let (price, precision) = get_price_feed(
         &*chainlink_program,
         &*price_feed,
@@ -305,12 +306,20 @@ pub mod coin98_dollar_mint_burn {
     if !is_in_period {
       burner.last_period_timestamp = current_timestamp;
     }
-    let pool_token = &ctx.accounts.pool_token;
-    let user_token = &ctx.accounts.user_token;
+    let pool_token = &accounts[1];
+    let pool_token = TokenAccount::unpack_from_slice(&pool_token.try_borrow_data().unwrap()).unwrap();
+    if pool_token.owner != root_signer.key() || pool_token.mint != burner.output_token {
+      return Err(ErrorCode::InvalidAccount.into());
+    }
+    let user_token = &accounts[2];
+    let user_token = TokenAccount::unpack_from_slice(&user_token.try_borrow_data().unwrap()).unwrap();
+    if user_token.mint != burner.output_token {
+      return Err(ErrorCode::InvalidAccount.into());
+    }
     transfer_token(
         &*root_signer,
-        &pool_token.to_account_info(),
-        &user_token.to_account_info(),
+        &accounts[1],
+        &accounts[2],
         output_amount,
         &[&seeds],
       )

@@ -7,7 +7,7 @@ use crate::state::{
   Burner,
   Minter,
 };
-use crate::external::anchor_token::{
+use crate::external::anchor_spl_token::{
   TokenAccount,
   TokenMint,
 };
@@ -184,14 +184,6 @@ pub struct BurnContext<'info> {
   #[account(mut)]
   pub pool_cusd: Account<'info, TokenAccount>,
 
-  /// CHECK: Account to send token
-  #[account(
-    constraint = pool_token.owner == root_signer.key() @ErrorCode::InvalidAccount,
-    constraint = pool_token.mint == burner.output_token @ErrorCode::InvalidAccount,
-  )]
-  #[account(mut)]
-  pub pool_token: Account<'info, TokenAccount>,
-
   /// CHECK: User CUSD token account
   #[account(
     constraint = user_cusd.mint == cusd_mint.key() @ErrorCode::InvalidAccount,
@@ -199,24 +191,11 @@ pub struct BurnContext<'info> {
   #[account(mut)]
   pub user_cusd: Account<'info, TokenAccount>,
 
-  /// CHECK: Account to receive token
-  #[account(
-    mut,
-    constraint = user_token.mint == burner.output_token @ErrorCode::InvalidAccount,
-  )]
-  pub user_token: Account<'info, TokenAccount>,
-
   /// CHECK: Chainlink program
   #[account(
     constraint = is_chainlink_program(&chainlink_program) @ErrorCode::InvalidAccount,
   )]
   pub chainlink_program: AccountInfo<'info>,
-
-  /// CHECK: Price feed for output token
-  #[account(
-    constraint = price_feed.key() == burner.output_price_feed @ErrorCode::InvalidAccount,
-  )]
-  pub price_feed: AccountInfo<'info>,
 
   /// CHECK: Solana native Token Program
   #[account(
