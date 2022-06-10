@@ -12,6 +12,8 @@ use solana_program::{
 };
 use crate::constant::{
   ROOT_KEYS,
+  ROOT_SIGNER_SEED_1,
+  ROOT_SIGNER_SEED_2,
 };
 use crate::context::*;
 use crate::error::{
@@ -222,8 +224,8 @@ pub mod coin98_dollar_mint_burn {
     let recipient = &ctx.accounts.recipient;
 
     let seeds: &[&[u8]] = &[
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
       &[app_data.signer_nonce],
     ];
 
@@ -287,8 +289,8 @@ pub mod coin98_dollar_mint_burn {
     let root_signer = &ctx.accounts.root_signer;
     let cusd_mint = &ctx.accounts.cusd_mint;
     let seeds: &[&[u8]] = &[
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
       &[app_data.signer_nonce],
     ];
     burn_token(
@@ -339,8 +341,8 @@ pub mod coin98_dollar_mint_burn {
     let pool_token = &ctx.accounts.pool_token;
     let recipient_token = &ctx.accounts.recipient_token;
     let seeds: &[&[u8]] = &[
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
       &[app_data.signer_nonce],
     ];
 
@@ -366,8 +368,8 @@ pub mod coin98_dollar_mint_burn {
     let root_signer = &ctx.accounts.root_signer;
     let token_mint = &ctx.accounts.token_mint;
     let seeds: &[&[u8]] = &[
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
       &[app_data.signer_nonce],
     ];
     transfer_authority(
@@ -391,8 +393,8 @@ pub mod coin98_dollar_mint_burn {
     app_data.nonce = *ctx.bumps.get("app_data").unwrap();
     let (_, signer_nonce) = Pubkey::find_program_address(
       &[
-        &[2, 151, 229, 53, 244, 77, 229, 7][..],
-        &[68, 203, 0, 94, 226, 230, 93, 156][..],
+        ROOT_SIGNER_SEED_1,
+        ROOT_SIGNER_SEED_2,
       ],
       ctx.program_id,
     );

@@ -1,4 +1,10 @@
 use anchor_lang::prelude::*;
+use crate::constant::{
+  APP_DATA_SEED_1,
+  APP_DATA_SEED_2,
+  ROOT_SIGNER_SEED_1,
+  ROOT_SIGNER_SEED_2,
+};
 use crate::error::{
   ErrorCode,
 };
@@ -98,8 +104,8 @@ pub struct MintContext<'info> {
 
   #[account(
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump = app_data.nonce,
   )]
@@ -108,8 +114,8 @@ pub struct MintContext<'info> {
   /// CHECK: PDA as root authority of the program
   #[account(
     seeds = [
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
     ],
     bump,
   )]
@@ -150,8 +156,8 @@ pub struct BurnContext<'info> {
 
   #[account(
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump = app_data.nonce,
   )]
@@ -160,8 +166,8 @@ pub struct BurnContext<'info> {
   /// CHECK: PDA as root authority of the program
   #[account(
     seeds = [
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
     ],
     bump,
   )]
@@ -213,8 +219,8 @@ pub struct WithdrawTokenContext<'info> {
 
   #[account(
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump = app_data.nonce,
   )]
@@ -223,8 +229,8 @@ pub struct WithdrawTokenContext<'info> {
   /// CHECK: PDA as root authority of the program
   #[account(
     seeds = [
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
     ],
     bump,
   )]
@@ -247,8 +253,8 @@ pub struct UnlockTokenMintContext<'info> {
 
   #[account(
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump = app_data.nonce,
   )]
@@ -257,8 +263,8 @@ pub struct UnlockTokenMintContext<'info> {
   /// CHECK: PDA as root authority of the program
   #[account(
     seeds = [
-      &[2, 151, 229, 53, 244, 77, 229, 7][..],
-      &[68, 203, 0, 94, 226, 230, 93, 156][..],
+      ROOT_SIGNER_SEED_1,
+      ROOT_SIGNER_SEED_2,
     ],
     bump,
   )]
@@ -281,8 +287,8 @@ pub struct CreateAppDataContext<'info> {
   #[account(
     init,
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump,
     payer = root,
@@ -303,8 +309,8 @@ pub struct SetAppDataContext<'info> {
   #[account(
     mut,
     seeds = [
-      &[8, 201, 24, 140, 93, 100, 30, 148][..],
-      &[15, 81, 173, 106, 105, 203, 253, 99][..],
+      APP_DATA_SEED_1,
+      APP_DATA_SEED_2,
     ],
     bump = app_data.nonce,
   )]
