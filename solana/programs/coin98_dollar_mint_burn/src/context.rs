@@ -246,6 +246,12 @@ pub struct WithdrawTokenContext<'info> {
 
   #[account(mut)]
   pub recipient_token: Account<'info, TokenAccount>,
+
+  /// CHECK: Solana native Token Program
+  #[account(
+    constraint = is_token_program(&token_program) @ErrorCode::InvalidAccount,
+  )]
+  pub token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
@@ -280,6 +286,12 @@ pub struct UnlockTokenMintContext<'info> {
     constraint = token_mint.mint_authority.contains(&root_signer.key()) @ErrorCode::InvalidAccount,
   )]
   pub token_mint: Account<'info, TokenMint>,
+
+  /// CHECK: Solana native Token Program
+  #[account(
+    constraint = is_token_program(&token_program) @ErrorCode::InvalidAccount,
+  )]
+  pub token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]

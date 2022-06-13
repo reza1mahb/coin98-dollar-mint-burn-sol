@@ -177,7 +177,7 @@ pub mod coin98_dollar_mint_burn {
 
     for (i, input_token) in minter.input_tokens.iter().enumerate() {
       let input_price_feed = &minter.input_price_feeds[i];
-      let price_feed = &accounts[i];
+      let price_feed = &accounts[3*i];
       if price_feed.key() != *input_price_feed {
         return Err(ErrorCode::InvalidAccount.into());
       }
@@ -190,8 +190,8 @@ pub mod coin98_dollar_mint_burn {
       let input_amount = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap()
         .checked_mul(precision).unwrap().checked_div(price).unwrap();
 
-      let from_account_index = account_indices[2*i + 1];
-      let to_account_index = account_indices[2*i + 2];
+      let from_account_index = account_indices[3*i + 1];
+      let to_account_index = account_indices[3*i + 2];
       let from_account = &accounts[from_account_index];
       let from_account = TokenAccount::unpack_from_slice(&from_account.try_borrow_data().unwrap()).unwrap();
       let to_account = &accounts[to_account_index];
