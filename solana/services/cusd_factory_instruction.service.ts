@@ -1,8 +1,17 @@
+import {
+  HashService,
+  TokenProgramInstructionService,
+  TOKEN_PROGRAM_ID
+} from '@coin98/solana-support-library'
 import { BorshCoder, Idl } from '@project-serum/anchor'
-import { AccountMeta, PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
-import { HashService, TOKEN_PROGRAM_ID } from '@coin98/solana-support-library'
-import CusdFactoryIdl from '../target/idl/coin98_dollar_mint_burn.json'
+import {
+  AccountMeta,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction
+} from '@solana/web3.js'
 import BN from 'bn.js'
+import CusdFactoryIdl from '../target/idl/coin98_dollar_mint_burn.json'
 
 const CUSD_TOKEN_MINT_ADDRESS = new PublicKey("")
 const CHAINLINK_PROGRAM_ID = new PublicKey("")
@@ -34,8 +43,8 @@ interface SetBurnerRequest {
   outputDecimals: number
   outputPriceFeed: PublicKey
   feePercent: number
-  totalBurnedLimit: number
-  perPeriodBurnedLimit: number
+  totalBurnedLimit: BN
+  perPeriodBurnedLimit: BN
 }
 
 interface MintRequest {
@@ -100,10 +109,18 @@ export interface Burner {
 }
 
 // Helpers
+
 export interface InputTokenPair {
   priceFeedAddress: PublicKey
   poolTokenAddress: PublicKey
   userTokenAddress: PublicKey
+}
+
+export interface InputTokenParams {
+  tokenAddress: PublicKey
+  decimals: number
+  percentage: number
+  priceFeedAddress: PublicKey
 }
 
 export interface OutputTokenPair {
@@ -112,13 +129,18 @@ export interface OutputTokenPair {
   userTokenAddress: PublicKey
 }
 
+export interface OutputTokenParams {
+  tokenAddress: PublicKey
+  decimals: number
+  priceFeedAddress: PublicKey
+}
+
 // RPC
 export class CusdFactoryInstructionService {
 
   static createMinter(
     rootAddress: PublicKey,
     derivationPath: Buffer,
-    minterAddress: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
@@ -127,6 +149,11 @@ export class CusdFactoryInstructionService {
     }
 
     const data = coder.instruction.encode('createMinter', request)
+
+    const [minterAddress,] = this.findMinterAddress(
+      derivationPath,
+      cusdFactoryProgramId,
+    )
 
     const keys: AccountMeta[] = [
       <AccountMeta>{ pubkey: rootAddress, isSigner: true, isWritable: true },
@@ -145,16 +172,17 @@ export class CusdFactoryInstructionService {
     rootAddress: PublicKey,
     minterAddress: PublicKey,
     isActive: boolean,
-    inputTokens: PublicKey[],
-    inputDecimals: number[],
-    inputPercentages: number[],
-    inputPriceFeeds: PublicKey[],
+    inputParams: InputTokenParams[],
     feePercent: number,
     totalMintedLimit: BN,
     perPeriodMintedLimit: BN,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
+    const inputTokens = inputParams.map(param => param.tokenAddress)
+    const inputDecimals = inputParams.map(param => param.decimals)
+    const inputPercentages = inputParams.map(param => param.percentage)
+    const inputPriceFeeds = inputParams.map(param => param.priceFeedAddress)
     const request: SetMinterRequest = {
       isActive,
       inputTokens,
@@ -183,7 +211,6 @@ export class CusdFactoryInstructionService {
   static createBurner(
     rootAddress: PublicKey,
     derivationPath: Buffer,
-    burnerAddress: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
@@ -192,6 +219,11 @@ export class CusdFactoryInstructionService {
     }
 
     const data = coder.instruction.encode('createBurner', request)
+
+    const [burnerAddress,] = this.findBurnerAddress(
+      derivationPath,
+      cusdFactoryProgramId,
+    )
 
     const keys: AccountMeta[] = [
       <AccountMeta>{ pubkey: rootAddress, isSigner: true, isWritable: true },
@@ -210,20 +242,18 @@ export class CusdFactoryInstructionService {
     rootAddress: PublicKey,
     burnerAddress: PublicKey,
     isActive: Boolean,
-    outputToken: PublicKey,
-    outputDecimals: number,
-    outputPriceFeed: PublicKey,
+    outputParams: OutputTokenParams,
     feePercent: number,
-    totalBurnedLimit: number,
-    perPeriodBurnedLimit: number,
+    totalBurnedLimit: BN,
+    perPeriodBurnedLimit: BN,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
     const request: SetBurnerRequest = {
       isActive,
-      outputToken,
-      outputDecimals,
-      outputPriceFeed,
+      outputToken: outputParams.tokenAddress,
+      outputDecimals: outputParams.decimals,
+      outputPriceFeed: outputParams.priceFeedAddress,
       feePercent,
       totalBurnedLimit,
       perPeriodBurnedLimit,
@@ -317,7 +347,6 @@ export class CusdFactoryInstructionService {
     userAddress: PublicKey,
     burnerAddress: PublicKey,
     userCusdTokenAddress: PublicKey,
-    poolCusdTokenAddress: PublicKey,
     amount: BN,
     outputToken: OutputTokenPair,
     cusdFactoryProgramId: PublicKey,
@@ -340,6 +369,10 @@ export class CusdFactoryInstructionService {
     )
     const [rootSignerAddress,] = this.findRootSignerAddress(
       cusdFactoryProgramId,
+    )
+    const poolCusdTokenAddress = TokenProgramInstructionService.findAssociatedTokenAddress(
+      rootSignerAddress,
+      CUSD_TOKEN_MINT_ADDRESS,
     )
 
     const keys: AccountMeta[] = [
@@ -485,13 +518,31 @@ export class CusdFactoryInstructionService {
     })
   }
 
+  static decodeAppDataData(
+    data: Buffer
+  ): AppData {
+    return coder.accounts.decode('AppData', data)
+  }
+
+  static decodeMinterData(
+    data: Buffer
+  ): Minter {
+    return coder.accounts.decode('Minter', data)
+  }
+
+  static decodeBurnerData(
+    data: Buffer
+  ): Burner {
+    return coder.accounts.decode('Burner', data)
+  }
+
   static findAppDataAddress(
     cusdFactoryProgramId: PublicKey,
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [
-        HashService.sha256("Program").slice(0, 8),
-        HashService.sha256("AppData").slice(0, 8),
+        HashService.sha256('Program').slice(0, 8),
+        HashService.sha256('AppData').slice(0, 8),
       ],
       cusdFactoryProgramId,
     )
@@ -502,8 +553,34 @@ export class CusdFactoryInstructionService {
   ): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [
-        HashService.sha256("Signer").slice(0, 8),
-        HashService.sha256("Root").slice(0, 8),
+        HashService.sha256('Signer').slice(0, 8),
+        HashService.sha256('Root').slice(0, 8),
+      ],
+      cusdFactoryProgramId,
+    )
+  }
+
+  static findMinterAddress(
+    derivationPath: Buffer,
+    cusdFactoryProgramId: PublicKey,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        HashService.sha256('Minter').slice(0, 8),
+        derivationPath,
+      ],
+      cusdFactoryProgramId,
+    )
+  }
+
+  static findBurnerAddress(
+    derivationPath: Buffer,
+    cusdFactoryProgramId: PublicKey,
+  ): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [
+        HashService.sha256('Burner').slice(0, 8),
+        derivationPath,
       ],
       cusdFactoryProgramId,
     )

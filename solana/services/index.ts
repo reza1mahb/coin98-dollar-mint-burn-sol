@@ -1,4 +1,7 @@
 export {
+  CusdFactoryService
+} from './cusd_factory.service';
+export {
   AppData,
   Burner,
   CusdFactoryInstructionService,
