@@ -1,9 +1,13 @@
-import { HashService, SolanaService, TokenProgramService } from '@coin98/solana-support-library';
+import {
+  HashService,
+  sendTransaction,
+  SolanaService,
+  TokenProgramService
+} from '@coin98/solana-support-library';
 import {
   Connection,
   Keypair,
   PublicKey,
-  sendAndConfirmTransaction,
   Transaction
 } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -58,7 +62,7 @@ export class CusdFactoryService {
     )
     transaction.add(setMinterInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Created Minter ${minterAddress.toBase58()}`, '---', txSign, '\n')
@@ -91,7 +95,7 @@ export class CusdFactoryService {
     )
     transaction.add(setMinterInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Updated Minter ${minterAddress.toBase58()}`, '---', txSign, '\n')
@@ -137,7 +141,7 @@ export class CusdFactoryService {
     )
     transaction.add(setMinterInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Created Burner ${burnerAddress.toBase58()}`, '---', txSign, '\n')
@@ -170,7 +174,7 @@ export class CusdFactoryService {
     )
     transaction.add(setBurnerInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Updated Burner ${burnerAddress.toBase58()}`, '---', txSign, '\n')
@@ -223,7 +227,7 @@ export class CusdFactoryService {
     )
     transaction.add(mintInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Minted ${amount.toString()} CUSD`, '---', txSign, '\n')
@@ -270,7 +274,7 @@ export class CusdFactoryService {
     )
     transaction.add(burnInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Burned ${amount.toString()} CUSD`, '---', txSign, '\n')
@@ -297,7 +301,7 @@ export class CusdFactoryService {
     )
     transaction.add(withdrawInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Withdraw ${amount.toString()} tokens`, '---', txSign, '\n')
@@ -320,7 +324,7 @@ export class CusdFactoryService {
     )
     transaction.add(unlockTokenMintInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Token Mint ${tokenMintAddress.toBase58()}'s authority unlocked to owner address`, '---', txSign, '\n')
@@ -355,7 +359,7 @@ export class CusdFactoryService {
     )
     transaction.add(setAppDataInstruction)
 
-    const txSign = await sendAndConfirmTransaction(connection, transaction, [
+    const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
     ])
     console.info(`Updated AppData at ${appDataAddress.toBase58()}`, '---', txSign, '\n')

@@ -29,7 +29,7 @@ pub fn get_price_feed<'i>(
     ).unwrap();
 
   let price = u64::try_from(price.answer).unwrap();
-  let precision = u64::from(precision);
+  let precision = u64::pow(u64::from(precision), 10);
 
   (price, precision)
 }

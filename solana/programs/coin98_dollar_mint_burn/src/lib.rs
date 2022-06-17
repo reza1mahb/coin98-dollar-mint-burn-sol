@@ -187,8 +187,8 @@ pub mod coin98_dollar_mint_burn {
         );
       let value_contrib = minter.input_percentages[i];
 
-      let input_amount = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap()
-        .checked_mul(precision).unwrap().checked_div(price).unwrap();
+      let input_vaule = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap();
+      let input_amount = multiply_fraction(input_vaule, precision, price);
 
       let from_account_index = account_indices[3*i + 1];
       let to_account_index = account_indices[3*i + 2];
@@ -273,7 +273,7 @@ pub mod coin98_dollar_mint_burn {
         &*chainlink_program,
         &*price_feed,
       );
-    let output_amount = amount.checked_mul(precision).unwrap().checked_div(price).unwrap();
+    let output_amount = multiply_fraction(amount, precision, price);
 
     let pool_cusd = &ctx.accounts.pool_cusd;
     let user_cusd = &ctx.accounts.user_cusd;
@@ -426,3 +426,12 @@ pub fn is_root(user: Pubkey) -> Result<()> {
 
   Ok(())
 }
+
+
+fn multiply_fraction(number: u64, numerator: u64, denominator: u64) -> u64 {
+  let number_128 = u128::from(number)
+    .checked_mul(u128::from(numerator)).unwrap()
+    .checked_div(u128::from(denominator)).unwrap();
+  u64::try_from(number_128).unwrap()
+}
+
