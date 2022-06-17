@@ -287,27 +287,36 @@ export class CusdFactoryInstructionService {
     for (const inputToken of inputTokens) {
       const index1 = extraAccounts.findIndex(meta => meta.pubkey.toBase58() === inputToken.priceFeedAddress.toBase58())
       if (index1 === -1) {
+        extraInstructions.push(extraAccounts.length)
         extraAccounts.push(
           <AccountMeta>{ pubkey: inputToken.priceFeedAddress, isSigner: false, isWritable: false },
         )
       }
-      extraInstructions.push(index1)
+      else {
+        extraInstructions.push(index1)
+      }
 
       const index2 = extraAccounts.findIndex(meta => meta.pubkey.toBase58() === inputToken.userTokenAddress.toBase58())
       if (index2 === -1) {
+        extraInstructions.push(extraAccounts.length)
         extraAccounts.push(
           <AccountMeta>{ pubkey: inputToken.userTokenAddress, isSigner: false, isWritable: true },
         )
       }
-      extraInstructions.push(index2)
+      else {
+        extraInstructions.push(index2)
+      }
 
       const index3 = extraAccounts.findIndex(meta => meta.pubkey.toBase58() === inputToken.poolTokenAddress.toBase58())
       if (index3 === -1) {
-          extraAccounts.push(
+        extraInstructions.push(extraAccounts.length)
+        extraAccounts.push(
           <AccountMeta>{ pubkey: inputToken.poolTokenAddress, isSigner: false, isWritable: true },
         )
       }
-      extraInstructions.push(index3)
+      else {
+        extraInstructions.push(index3)
+      }
     }
 
     const request: MintRequest = {

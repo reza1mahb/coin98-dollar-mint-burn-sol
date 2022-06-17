@@ -19,7 +19,7 @@ pub fn get_price_feed<'i>(
   feed_account: &AccountInfo<'i>,
 ) -> (u64, u64) {
 
-  let price = latest_round_data(
+  let round = latest_round_data(
       chainlink_program.clone(),
       feed_account.clone(),
     ).unwrap();
@@ -28,8 +28,8 @@ pub fn get_price_feed<'i>(
       feed_account.clone(),
     ).unwrap();
 
-  let price = u64::try_from(price.answer).unwrap();
-  let precision = u64::pow(u64::from(precision), 10);
+  let price = u64::try_from(round.answer).unwrap();
+  let precision = u64::pow(10, u32::from(precision));
 
   (price, precision)
 }

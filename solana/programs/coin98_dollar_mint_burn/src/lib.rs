@@ -230,9 +230,9 @@ pub mod coin98_dollar_mint_burn {
     ];
 
     mint_token(
+        &*root_signer,
         &*cusd_mint,
         &*recipient,
-        &*root_signer,
         amount,
         &[&seeds],
       )

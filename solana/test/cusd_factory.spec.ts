@@ -36,14 +36,14 @@ describe('chainlink_dfeed_local_test', function() {
     'USDC-USD',
     CHAINLINK_DFEED_PROGRAM_ID,
   )
-  const randomMinterName: string = (Math.random() * 1000).toString()
-  const randomMinterAddress = CusdFactoryService.findMinterAddress(
-    randomMinterName,
+  const usdcOnlyMinterName: string = (Math.random() * 1000).toString()
+  const [usdcOnlyMinterAddress,] = CusdFactoryService.findMinterAddress(
+    usdcOnlyMinterName,
     PROGRAM_ID,
   )
-  const randomBurnerName: string = (Math.random() * 1000).toString()
-  const randomBurnerAddress = CusdFactoryService.findBurnerAddress(
-    randomBurnerName,
+  const usdcBurnerName: string = (Math.random() * 1000).toString()
+  const [usdcBurnerAddress,] = CusdFactoryService.findBurnerAddress(
+    usdcBurnerName,
     PROGRAM_ID,
   )
 
@@ -53,6 +53,9 @@ describe('chainlink_dfeed_local_test', function() {
     c98TokenAccount = await TestAccountService.getTokenAccount(2)
     cusdTokenAccount = await TestAccountService.getTokenAccount(1)
     usdcTokenAccount = await TestAccountService.getTokenAccount(3)
+    const [rootSignerAddress,] = CusdFactoryService.findRootSignerAddress(
+      PROGRAM_ID,
+    )
     if(await SolanaService.isAddressAvailable(connection, c98TokenAccount.publicKey)) {
       await TokenProgramService.createTokenMint(
         connection,
@@ -69,7 +72,7 @@ describe('chainlink_dfeed_local_test', function() {
         defaultAccount,
         cusdTokenAccount,
         6,
-        defaultAccount.publicKey,
+        rootSignerAddress,
         null,
       )
     }
@@ -123,13 +126,32 @@ describe('chainlink_dfeed_local_test', function() {
       24,
       PROGRAM_ID,
     )
+    // Initialize all token account for Coin98DollarMintBurn
+    await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      rootSignerAddress,
+      cusdTokenAccount.publicKey,
+    )
+    await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      rootSignerAddress,
+      c98TokenAccount.publicKey,
+    )
+    await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      rootSignerAddress,
+      usdcTokenAccount.publicKey,
+    )
   })
 
-  it('create random minter', async function() {
+  it('create USDC only minter', async function() {
     await CusdFactoryService.createMinter(
       connection,
       defaultAccount,
-      randomMinterName,
+      usdcOnlyMinterName,
       true,
       [
         <InputTokenParams>{
@@ -140,17 +162,49 @@ describe('chainlink_dfeed_local_test', function() {
         },
       ],
       30,
-      new BN(1000000),
-      new BN(1000),
+      new BN("1000000000000"),
+      new BN("1000000000"),
       PROGRAM_ID,
     )
   })
 
-  it('create random burner', async function() {
+  it('mint 100 CUSD from 100 USDC', async function() {
+    await TokenProgramService.mint(
+      connection,
+      defaultAccount,
+      usdcTokenAccount.publicKey,
+      testAccount1.publicKey,
+      new BN("100000000"),
+    )
+    const testAccount1CusdTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      testAccount1,
+      testAccount1.publicKey,
+      cusdTokenAccount.publicKey,
+    )
+    await ChainlinkDfeedService.submitFeed(
+      connection,
+      defaultAccount,
+      usdcPriceFeedAddress,
+      new BN("1000000"),
+      CHAINLINK_DFEED_PROGRAM_ID,
+    )
+    await CusdFactoryService.mint(
+      connection,
+      testAccount1,
+      usdcOnlyMinterAddress,
+      cusdTokenAccount.publicKey,
+      new BN("100000000"),
+      testAccount1CusdTokenAddress,
+      PROGRAM_ID,
+    )
+  })
+
+  it('create USDC burner', async function() {
     await CusdFactoryService.createBurner(
       connection,
       defaultAccount,
-      randomBurnerName,
+      usdcBurnerName,
       true,
       <OutputTokenParams>{
         tokenAddress: usdcTokenAccount.publicKey,
@@ -158,8 +212,8 @@ describe('chainlink_dfeed_local_test', function() {
         decimals: 6,
       },
       30,
-      new BN(1000000),
-      new BN(1000),
+      new BN("1000000000000"),
+      new BN("1000000000"),
       PROGRAM_ID,
     )
   })
