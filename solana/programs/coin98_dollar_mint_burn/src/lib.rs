@@ -32,7 +32,7 @@ use crate::external::spl_token::{
   TokenAccount,
 };
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("CFvHYH4afBtK97rAwKkZtpnEQGqx8AmS6SWmYZd6JdmE");
 
 #[program]
 pub mod coin98_dollar_mint_burn {
