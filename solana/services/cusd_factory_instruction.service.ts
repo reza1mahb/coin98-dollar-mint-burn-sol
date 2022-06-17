@@ -13,8 +13,7 @@ import {
 import BN from 'bn.js'
 import CusdFactoryIdl from '../target/idl/coin98_dollar_mint_burn.json'
 
-const CUSD_TOKEN_MINT_ADDRESS = new PublicKey("")
-const CHAINLINK_PROGRAM_ID = new PublicKey("")
+const CHAINLINK_PROGRAM_ID = new PublicKey("HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny")
 const coder = new BorshCoder(CusdFactoryIdl as Idl)
 
 // Requests
@@ -276,6 +275,7 @@ export class CusdFactoryInstructionService {
   static mint(
     userAddress: PublicKey,
     minterAddress: PublicKey,
+    cusdTokenMintAddress: PublicKey,
     inputTokens: InputTokenPair[],
     amount: BN,
     userCusdTokenAddress: PublicKey,
@@ -328,7 +328,7 @@ export class CusdFactoryInstructionService {
       <AccountMeta>{ pubkey: userAddress, isSigner: true, isWritable: false },
       <AccountMeta>{ pubkey: appDataAddress, isSigner: false, isWritable: false },
       <AccountMeta>{ pubkey: rootSignerAddress, isSigner: false, isWritable: false },
-      <AccountMeta>{ pubkey: CUSD_TOKEN_MINT_ADDRESS, isSigner: false, isWritable: true },
+      <AccountMeta>{ pubkey: cusdTokenMintAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: minterAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: userCusdTokenAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: CHAINLINK_PROGRAM_ID, isSigner: false, isWritable: false },
@@ -346,6 +346,7 @@ export class CusdFactoryInstructionService {
   static burn(
     userAddress: PublicKey,
     burnerAddress: PublicKey,
+    cusdTokenMintAddress: PublicKey,
     userCusdTokenAddress: PublicKey,
     amount: BN,
     outputToken: OutputTokenPair,
@@ -372,14 +373,14 @@ export class CusdFactoryInstructionService {
     )
     const poolCusdTokenAddress = TokenProgramInstructionService.findAssociatedTokenAddress(
       rootSignerAddress,
-      CUSD_TOKEN_MINT_ADDRESS,
+      cusdTokenMintAddress,
     )
 
     const keys: AccountMeta[] = [
       <AccountMeta>{ pubkey: userAddress, isSigner: true, isWritable: false },
       <AccountMeta>{ pubkey: appDataAddress, isSigner: false, isWritable: false },
       <AccountMeta>{ pubkey: rootSignerAddress, isSigner: false, isWritable: false },
-      <AccountMeta>{ pubkey: CUSD_TOKEN_MINT_ADDRESS, isSigner: false, isWritable: true },
+      <AccountMeta>{ pubkey: cusdTokenMintAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: burnerAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: poolCusdTokenAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: userCusdTokenAddress, isSigner: false, isWritable: true },
@@ -471,7 +472,7 @@ export class CusdFactoryInstructionService {
 
     const request: CreateAppDataRequest = { }
 
-    const data = coder.instruction.encode('creteAppData', request)
+    const data = coder.instruction.encode('createAppData', request)
 
     const [appDataAddress,] = this.findAppDataAddress(
       cusdFactoryProgramId,

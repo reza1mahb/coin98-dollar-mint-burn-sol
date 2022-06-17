@@ -185,6 +185,7 @@ export class CusdFactoryService {
     connection: Connection,
     payerAccount: Keypair,
     minterAddress: PublicKey,
+    cusdTokenMintAddress: PublicKey,
     amount: BN,
     userCusdTokenAddress: PublicKey,
     cusdFactoryProgramId: PublicKey,
@@ -220,6 +221,7 @@ export class CusdFactoryService {
     const mintInstruction = CusdFactoryInstructionService.mint(
       payerAccount.publicKey,
       minterAddress,
+      cusdTokenMintAddress,
       inputTokens,
       amount,
       userCusdTokenAddress,
@@ -238,6 +240,7 @@ export class CusdFactoryService {
     connection: Connection,
     payerAccount: Keypair,
     burnerAddress: PublicKey,
+    cusdTokenMintAddress: PublicKey,
     userCusdTokenAddress: PublicKey,
     amount: BN,
     userTokenAddress: PublicKey,
@@ -267,6 +270,7 @@ export class CusdFactoryService {
     const burnInstruction = CusdFactoryInstructionService.burn(
       payerAccount.publicKey,
       burnerAddress,
+      cusdTokenMintAddress,
       userCusdTokenAddress,
       amount,
       outputToken,

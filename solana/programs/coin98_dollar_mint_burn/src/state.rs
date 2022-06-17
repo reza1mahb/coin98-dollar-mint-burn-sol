@@ -16,7 +16,7 @@ pub struct Minter {
   pub nonce: u8,
   pub is_active: bool,
   pub input_tokens: Vec<Pubkey>,
-  pub input_decimals: Vec<u8>,
+  pub input_decimals: Vec<u16>,
   pub input_percentages: Vec<u16>,
   pub input_price_feeds: Vec<Pubkey>,
   pub fee_percent: u16,
@@ -31,7 +31,7 @@ pub struct Minter {
 impl Minter {
   pub fn size(token_count: u8) -> usize {
     let token_count = usize::from(token_count);
-    1 + 1 + (4 + 32 * token_count) + (4 + token_count) + (4 + 2 * token_count) + (4 + 32 * token_count) + 2 + 8 + 8 + 8 + 8 + 8 + 8
+    1 + 1 + (4 + 32 * token_count) + (4 + 2 * token_count) + (4 + 2 * token_count) + (4 + 32 * token_count) + 2 + 8 + 8 + 8 + 8 + 8 + 8
   }
 }
 
@@ -40,7 +40,7 @@ pub struct Burner {
   pub nonce: u8,
   pub is_active: bool,
   pub output_token: Pubkey,
-  pub output_decimals: u8,
+  pub output_decimals: u16,
   pub output_price_feed: Pubkey,
   pub fee_percent: u16,
   pub accumulated_fee: u64,
@@ -52,5 +52,5 @@ pub struct Burner {
 }
 
 impl Burner {
-  pub const LEN: usize = 1 + 1 + 32 + 1 + 32 + 2 + 8 + 8 + 8 + 8 + 8 + 8;
+  pub const LEN: usize = 1 + 1 + 32 + 2 + 32 + 2 + 8 + 8 + 8 + 8 + 8 + 8;
 }
