@@ -27,6 +27,7 @@ describe('chainlink_dfeed_local_test', function() {
   let defaultAccount: Keypair
   let ownerAccount: Keypair
   let testAccount1: Keypair
+  let testAccount2: Keypair
   let c98TokenAccount: Keypair
   let cusdTokenAccount: Keypair
   let usdcTokenAccount: Keypair
@@ -53,6 +54,7 @@ describe('chainlink_dfeed_local_test', function() {
     defaultAccount = await SolanaConfigService.getDefaultAccount()
     ownerAccount = await TestAccountService.getAccount(0)
     testAccount1 = await TestAccountService.getAccount(1)
+    testAccount2 = await TestAccountService.getAccount(2)
     c98TokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.C98)
     cusdTokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.CUSD)
     usdcTokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.USDC)
@@ -70,7 +72,14 @@ describe('chainlink_dfeed_local_test', function() {
       testAccount1.publicKey,
       1000000,
     )
+    await SystemProgramService.transfer(
+      connection,
+      defaultAccount,
+      testAccount2.publicKey,
+      1000000,
+    )
 
+    // Create token mint if not exists
     const [rootSignerAddress,] = CusdFactoryService.findRootSignerAddress(
       PROGRAM_ID,
     )
@@ -104,6 +113,7 @@ describe('chainlink_dfeed_local_test', function() {
         null,
       )
     }
+    // Create price feed
     if(await SolanaService.isAddressAvailable(connection, c98PriceFeedAddress)) {
       await ChainlinkDfeedService.cteateFeed(
         connection,
@@ -180,18 +190,18 @@ describe('chainlink_dfeed_local_test', function() {
   })
 
   it('mint 100 CUSD from 100 USDC', async function() {
+    const testAccount1CusdTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      testAccount1.publicKey,
+      cusdTokenAccount.publicKey,
+    )
     await TokenProgramService.mint(
       connection,
       ownerAccount,
       usdcTokenAccount.publicKey,
       testAccount1.publicKey,
       new BN("100000000"),
-    )
-    const testAccount1CusdTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
-      connection,
-      defaultAccount,
-      testAccount1.publicKey,
-      cusdTokenAccount.publicKey,
     )
     await ChainlinkDfeedService.submitFeed(
       connection,
@@ -226,6 +236,56 @@ describe('chainlink_dfeed_local_test', function() {
       30,
       new BN("1000000000000"),
       new BN("1000000000"),
+      PROGRAM_ID,
+    )
+  })
+
+  it('burn 50 CUSD for 50 USDC', async function() {
+    const testAccount2CusdTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      testAccount2.publicKey,
+      cusdTokenAccount.publicKey,
+    )
+    const testAccount2UsdcTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      testAccount2.publicKey,
+      usdcTokenAccount.publicKey,
+    )
+    await ChainlinkDfeedService.submitFeed(
+      connection,
+      ownerAccount,
+      usdcPriceFeedAddress,
+      new BN("1000000"),
+      CHAINLINK_DFEED_PROGRAM_ID,
+    )
+    await TokenProgramService.mint(
+      connection,
+      ownerAccount,
+      usdcTokenAccount.publicKey,
+      testAccount2.publicKey,
+      new BN("75000000"),
+    )
+    await CusdFactoryService.mint(
+      connection,
+      testAccount2,
+      usdcOnlyMinterAddress,
+      cusdTokenAccount.publicKey,
+      new BN("75000000"),
+      testAccount2CusdTokenAddress,
+      CHAINLINK_DFEED_PROGRAM_ID,
+      PROGRAM_ID,
+    )
+    await CusdFactoryService.burn(
+      connection,
+      testAccount2,
+      usdcBurnerAddress,
+      cusdTokenAccount.publicKey,
+      testAccount2CusdTokenAddress,
+      new BN("50000000"),
+      testAccount2UsdcTokenAddress,
+      CHAINLINK_DFEED_PROGRAM_ID,
       PROGRAM_ID,
     )
   })

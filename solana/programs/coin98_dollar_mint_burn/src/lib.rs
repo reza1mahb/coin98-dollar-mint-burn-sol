@@ -220,6 +220,10 @@ pub mod coin98_dollar_mint_burn {
       minter.last_period_timestamp = current_timestamp;
     }
 
+    let protocol_fee = multiply_fraction(amount, u64::from(minter.fee_percent), 10000);
+    let amount_to_transfer = amount.checked_sub(protocol_fee).unwrap();
+    minter.accumulated_fee = minter.accumulated_fee.checked_add(protocol_fee).unwrap();
+
     let cusd_mint = &ctx.accounts.cusd_mint;
     let recipient = &ctx.accounts.recipient;
 
@@ -233,7 +237,7 @@ pub mod coin98_dollar_mint_burn {
         &*root_signer,
         &*cusd_mint,
         &*recipient,
-        amount,
+        amount_to_transfer,
         &[&seeds],
       )
       .expect("CUSD Factory: CPI failed.");
@@ -308,6 +312,10 @@ pub mod coin98_dollar_mint_burn {
     if !is_in_period {
       burner.last_period_timestamp = current_timestamp;
     }
+    let protocol_fee = multiply_fraction(output_amount, u64::from(burner.fee_percent), 10000);
+    let amount_to_transfer = output_amount.checked_sub(protocol_fee).unwrap();
+    burner.accumulated_fee = burner.accumulated_fee.checked_add(protocol_fee).unwrap();
+
     let pool_token = &accounts[1];
     let pool_token = TokenAccount::unpack_from_slice(&pool_token.try_borrow_data().unwrap()).unwrap();
     if pool_token.owner != root_signer.key() || pool_token.mint != burner.output_token {
@@ -322,7 +330,7 @@ pub mod coin98_dollar_mint_burn {
         &*root_signer,
         &accounts[1],
         &accounts[2],
-        output_amount,
+        amount_to_transfer,
         &[&seeds],
       )
       .expect("CUSD Factory: CPI failed.");
@@ -427,11 +435,9 @@ pub fn is_root(user: Pubkey) -> Result<()> {
   Ok(())
 }
 
-
 fn multiply_fraction(number: u64, numerator: u64, denominator: u64) -> u64 {
   let number_128 = u128::from(number)
     .checked_mul(u128::from(numerator)).unwrap()
     .checked_div(u128::from(denominator)).unwrap();
   u64::try_from(number_128).unwrap()
 }
-

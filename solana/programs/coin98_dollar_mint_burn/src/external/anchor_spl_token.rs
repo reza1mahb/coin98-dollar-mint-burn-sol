@@ -94,24 +94,24 @@ pub fn burn_token<'a>(
   amount: u64,
   signer_seeds: &[&[&[u8]]],
 ) -> std::result::Result<(), ProgramError> {
-  let data = MintTokenParams {
+  let data = BurnTokenParams {
     instruction: 8,
     amount,
   };
   let instruction = Instruction {
     program_id: TOKEN_PROGRAM_ID,
     accounts: vec![
-      AccountMeta::new(*token_mint.key, false),
       AccountMeta::new(*token_account.key, false),
+      AccountMeta::new(*token_mint.key, false),
       AccountMeta::new_readonly(*owner.key, true),
     ],
     data: data.try_to_vec().unwrap(),
   };
   if signer_seeds.len() == 0 {
-    invoke(&instruction, &[token_mint.clone(), token_account.clone(), owner.clone()])
+    invoke(&instruction, &[token_account.clone(), token_mint.clone(), owner.clone()])
   }
   else {
-    invoke_signed(&instruction, &[token_mint.clone(), token_account.clone(), owner.clone()], &signer_seeds)
+    invoke_signed(&instruction, &[token_account.clone(), token_mint.clone(), owner.clone()], &signer_seeds)
   }
 }
 
