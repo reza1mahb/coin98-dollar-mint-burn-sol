@@ -6,7 +6,8 @@ import {
 } from '@coin98/solana-support-library'
 import {
   SolanaConfigService,
-  TestAccountService
+  TestAccountService,
+  TokenName
 } from '@coin98/solana-support-library/config'
 import {
   Connection,
@@ -20,10 +21,11 @@ import { InputTokenParams, OutputTokenParams } from '../services/cusd_factory_in
 describe('chainlink_dfeed_local_test', function() {
 
   const PROGRAM_ID = new PublicKey('CFvHYH4afBtK97rAwKkZtpnEQGqx8AmS6SWmYZd6JdmE')
-  const CHAINLINK_DFEED_PROGRAM_ID = new PublicKey('HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny')
+  const CHAINLINK_DFEED_PROGRAM_ID = new PublicKey('DFeedTiF3G7eojEqc7KuqJFbBD3idV9y7i6Q7LxKtF7e')
 
   const connection = new Connection('http://localhost:8899', 'confirmed')
   let defaultAccount: Keypair
+  let ownerAccount: Keypair
   let testAccount1: Keypair
   let c98TokenAccount: Keypair
   let cusdTokenAccount: Keypair
@@ -49,10 +51,26 @@ describe('chainlink_dfeed_local_test', function() {
 
   before(async function() {
     defaultAccount = await SolanaConfigService.getDefaultAccount()
+    ownerAccount = await TestAccountService.getAccount(0)
     testAccount1 = await TestAccountService.getAccount(1)
-    c98TokenAccount = await TestAccountService.getTokenAccount(2)
-    cusdTokenAccount = await TestAccountService.getTokenAccount(1)
-    usdcTokenAccount = await TestAccountService.getTokenAccount(3)
+    c98TokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.C98)
+    cusdTokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.CUSD)
+    usdcTokenAccount = await TestAccountService.getNamedTokenAccount(TokenName.USDC)
+
+    // Ensure test account has lamports to invoke contracts
+    await SystemProgramService.transfer(
+      connection,
+      defaultAccount,
+      ownerAccount.publicKey,
+      12500000,
+    )
+    await SystemProgramService.transfer(
+      connection,
+      defaultAccount,
+      testAccount1.publicKey,
+      1000000,
+    )
+
     const [rootSignerAddress,] = CusdFactoryService.findRootSignerAddress(
       PROGRAM_ID,
     )
@@ -62,7 +80,7 @@ describe('chainlink_dfeed_local_test', function() {
         defaultAccount,
         c98TokenAccount,
         6,
-        defaultAccount.publicKey,
+        ownerAccount.publicKey,
         null,
       )
     }
@@ -82,7 +100,7 @@ describe('chainlink_dfeed_local_test', function() {
         defaultAccount,
         usdcTokenAccount,
         6,
-        defaultAccount.publicKey,
+        ownerAccount.publicKey,
         null,
       )
     }
@@ -112,17 +130,10 @@ describe('chainlink_dfeed_local_test', function() {
         CHAINLINK_DFEED_PROGRAM_ID,
       )
     }
-    // Ensure test account has lamports to invoke contracts
-    await SystemProgramService.transfer(
-      connection,
-      defaultAccount,
-      testAccount1.publicKey,
-      1000000,
-    )
     // Initialize Coin98DollarMintBurn internal state
     await CusdFactoryService.initAppData(
       connection,
-      defaultAccount,
+      ownerAccount,
       24,
       PROGRAM_ID,
     )
@@ -150,7 +161,7 @@ describe('chainlink_dfeed_local_test', function() {
   it('create USDC only minter', async function() {
     await CusdFactoryService.createMinter(
       connection,
-      defaultAccount,
+      ownerAccount,
       usdcOnlyMinterName,
       true,
       [
@@ -171,20 +182,20 @@ describe('chainlink_dfeed_local_test', function() {
   it('mint 100 CUSD from 100 USDC', async function() {
     await TokenProgramService.mint(
       connection,
-      defaultAccount,
+      ownerAccount,
       usdcTokenAccount.publicKey,
       testAccount1.publicKey,
       new BN("100000000"),
     )
     const testAccount1CusdTokenAddress = await TokenProgramService.createAssociatedTokenAccount(
       connection,
-      testAccount1,
+      defaultAccount,
       testAccount1.publicKey,
       cusdTokenAccount.publicKey,
     )
     await ChainlinkDfeedService.submitFeed(
       connection,
-      defaultAccount,
+      ownerAccount,
       usdcPriceFeedAddress,
       new BN("1000000"),
       CHAINLINK_DFEED_PROGRAM_ID,
@@ -196,6 +207,7 @@ describe('chainlink_dfeed_local_test', function() {
       cusdTokenAccount.publicKey,
       new BN("100000000"),
       testAccount1CusdTokenAddress,
+      CHAINLINK_DFEED_PROGRAM_ID,
       PROGRAM_ID,
     )
   })
@@ -203,7 +215,7 @@ describe('chainlink_dfeed_local_test', function() {
   it('create USDC burner', async function() {
     await CusdFactoryService.createBurner(
       connection,
-      defaultAccount,
+      ownerAccount,
       usdcBurnerName,
       true,
       <OutputTokenParams>{

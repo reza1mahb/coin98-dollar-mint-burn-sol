@@ -13,7 +13,6 @@ import {
 import BN from 'bn.js'
 import CusdFactoryIdl from '../target/idl/coin98_dollar_mint_burn.json'
 
-const CHAINLINK_PROGRAM_ID = new PublicKey("HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny")
 const coder = new BorshCoder(CusdFactoryIdl as Idl)
 
 // Requests
@@ -279,6 +278,7 @@ export class CusdFactoryInstructionService {
     inputTokens: InputTokenPair[],
     amount: BN,
     userCusdTokenAddress: PublicKey,
+    chainlinkProgramId: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
@@ -340,7 +340,7 @@ export class CusdFactoryInstructionService {
       <AccountMeta>{ pubkey: cusdTokenMintAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: minterAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: userCusdTokenAddress, isSigner: false, isWritable: true },
-      <AccountMeta>{ pubkey: CHAINLINK_PROGRAM_ID, isSigner: false, isWritable: false },
+      <AccountMeta>{ pubkey: chainlinkProgramId, isSigner: false, isWritable: false },
       <AccountMeta>{ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       ...extraAccounts
     ]
@@ -359,6 +359,7 @@ export class CusdFactoryInstructionService {
     userCusdTokenAddress: PublicKey,
     amount: BN,
     outputToken: OutputTokenPair,
+    chainlinkProgramId: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): TransactionInstruction {
 
@@ -393,7 +394,7 @@ export class CusdFactoryInstructionService {
       <AccountMeta>{ pubkey: burnerAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: poolCusdTokenAddress, isSigner: false, isWritable: true },
       <AccountMeta>{ pubkey: userCusdTokenAddress, isSigner: false, isWritable: true },
-      <AccountMeta>{ pubkey: CHAINLINK_PROGRAM_ID, isSigner: false, isWritable: false },
+      <AccountMeta>{ pubkey: chainlinkProgramId, isSigner: false, isWritable: false },
       <AccountMeta>{ pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       ...extraAccounts
     ]

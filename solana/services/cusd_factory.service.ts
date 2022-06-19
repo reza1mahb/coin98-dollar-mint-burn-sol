@@ -188,6 +188,7 @@ export class CusdFactoryService {
     cusdTokenMintAddress: PublicKey,
     amount: BN,
     userCusdTokenAddress: PublicKey,
+    chainlinkProgramId: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): Promise<boolean> {
 
@@ -225,6 +226,7 @@ export class CusdFactoryService {
       inputTokens,
       amount,
       userCusdTokenAddress,
+      chainlinkProgramId,
       cusdFactoryProgramId,
     )
     transaction.add(mintInstruction)
@@ -244,6 +246,7 @@ export class CusdFactoryService {
     userCusdTokenAddress: PublicKey,
     amount: BN,
     userTokenAddress: PublicKey,
+    chainlinkProgramId: PublicKey,
     cusdFactoryProgramId: PublicKey,
   ): Promise<boolean> {
 
@@ -274,6 +277,7 @@ export class CusdFactoryService {
       userCusdTokenAddress,
       amount,
       outputToken,
+      chainlinkProgramId,
       cusdFactoryProgramId,
     )
     transaction.add(burnInstruction)
