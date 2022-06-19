@@ -293,12 +293,26 @@ export class CusdFactoryService {
     connection: Connection,
     payerAccount: Keypair,
     poolTokenAddress: PublicKey,
-    recipientTokenAddress: PublicKey,
+    recipientAddress: PublicKey,
     amount: BN,
     cusdFactoryProgramId: PublicKey,
   ): Promise<boolean> {
 
     const transaction = new Transaction()
+
+    const payerTokenAccountInfo = await TokenProgramService.getTokenAccountInfo(
+      connection,
+      poolTokenAddress,
+    )
+    let [recipientTokenAddress, createATAInstruction] = await TokenProgramService.findRecipientTokenAddress(
+      connection,
+      payerAccount.publicKey,
+      recipientAddress,
+      payerTokenAccountInfo.mint,
+    )
+    if(createATAInstruction) {
+      transaction.add(createATAInstruction)
+    }
 
     const withdrawInstruction = CusdFactoryInstructionService.withdrawToken(
       payerAccount.publicKey,

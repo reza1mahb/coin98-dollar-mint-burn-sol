@@ -183,8 +183,8 @@ describe('chainlink_dfeed_local_test', function() {
         },
       ],
       30,
-      new BN("1000000000000"),
-      new BN("1000000000"),
+      new BN('1000000000000'),
+      new BN('1000000000'),
       PROGRAM_ID,
     )
   })
@@ -201,13 +201,13 @@ describe('chainlink_dfeed_local_test', function() {
       ownerAccount,
       usdcTokenAccount.publicKey,
       testAccount1.publicKey,
-      new BN("100000000"),
+      new BN('100000000'),
     )
     await ChainlinkDfeedService.submitFeed(
       connection,
       ownerAccount,
       usdcPriceFeedAddress,
-      new BN("1000000"),
+      new BN('1000000'),
       CHAINLINK_DFEED_PROGRAM_ID,
     )
     await CusdFactoryService.mint(
@@ -215,7 +215,7 @@ describe('chainlink_dfeed_local_test', function() {
       testAccount1,
       usdcOnlyMinterAddress,
       cusdTokenAccount.publicKey,
-      new BN("100000000"),
+      new BN('100000000'),
       testAccount1CusdTokenAddress,
       CHAINLINK_DFEED_PROGRAM_ID,
       PROGRAM_ID,
@@ -234,8 +234,8 @@ describe('chainlink_dfeed_local_test', function() {
         decimals: 6,
       },
       30,
-      new BN("1000000000000"),
-      new BN("1000000000"),
+      new BN('1000000000000'),
+      new BN('1000000000'),
       PROGRAM_ID,
     )
   })
@@ -257,7 +257,7 @@ describe('chainlink_dfeed_local_test', function() {
       connection,
       ownerAccount,
       usdcPriceFeedAddress,
-      new BN("1000000"),
+      new BN('1000000'),
       CHAINLINK_DFEED_PROGRAM_ID,
     )
     await TokenProgramService.mint(
@@ -265,14 +265,14 @@ describe('chainlink_dfeed_local_test', function() {
       ownerAccount,
       usdcTokenAccount.publicKey,
       testAccount2.publicKey,
-      new BN("75000000"),
+      new BN('75000000'),
     )
     await CusdFactoryService.mint(
       connection,
       testAccount2,
       usdcOnlyMinterAddress,
       cusdTokenAccount.publicKey,
-      new BN("75000000"),
+      new BN('75000000'),
       testAccount2CusdTokenAddress,
       CHAINLINK_DFEED_PROGRAM_ID,
       PROGRAM_ID,
@@ -283,10 +283,68 @@ describe('chainlink_dfeed_local_test', function() {
       usdcBurnerAddress,
       cusdTokenAccount.publicKey,
       testAccount2CusdTokenAddress,
-      new BN("50000000"),
+      new BN('50000000'),
       testAccount2UsdcTokenAddress,
       CHAINLINK_DFEED_PROGRAM_ID,
       PROGRAM_ID,
+    )
+  })
+
+  it('withdraw token from pool', async function() {
+    const [rootSignerAddress,] = CusdFactoryService.findRootSignerAddress(
+      PROGRAM_ID,
+    )
+    const poolC98TokenAddress = await TokenProgramService.createAssociatedTokenAccount(
+      connection,
+      defaultAccount,
+      rootSignerAddress,
+      c98TokenAccount.publicKey,
+    )
+    await TokenProgramService.mint(
+      connection,
+      ownerAccount,
+      c98TokenAccount.publicKey,
+      poolC98TokenAddress,
+      new BN('10000000'),
+    )
+
+    await CusdFactoryService.withdrawToken(
+      connection,
+      ownerAccount,
+      poolC98TokenAddress,
+      ownerAccount.publicKey,
+      new BN('10000000'),
+      PROGRAM_ID,
+    )
+  })
+
+  it('unlock token mint', async function() {
+    const [rootSignerAddress,] = CusdFactoryService.findRootSignerAddress(
+      PROGRAM_ID,
+    )
+    const randomTokenMint = Keypair.generate()
+    await TokenProgramService.createTokenMint(
+      connection,
+      defaultAccount,
+      randomTokenMint,
+      6,
+      rootSignerAddress,
+      null,
+    )
+
+    await CusdFactoryService.unlockTokenMint(
+      connection,
+      ownerAccount,
+      randomTokenMint.publicKey,
+      PROGRAM_ID,
+    )
+
+    await TokenProgramService.mint(
+      connection,
+      ownerAccount,
+      randomTokenMint.publicKey,
+      testAccount1.publicKey,
+      new BN('1000000'),
     )
   })
 })
