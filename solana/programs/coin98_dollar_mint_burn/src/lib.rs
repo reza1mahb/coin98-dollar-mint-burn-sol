@@ -1,6 +1,7 @@
 pub mod constant;
 pub mod context;
 pub mod error;
+pub mod event;
 pub mod state;
 pub mod external;
 
@@ -19,6 +20,7 @@ use crate::context::*;
 use crate::error::{
   ErrorCode,
 };
+use crate::event::*;
 use crate::external::anchor_spl_token::{
   burn_token,
   mint_token,
@@ -87,13 +89,24 @@ pub mod coin98_dollar_mint_burn {
 
     let minter = &mut ctx.accounts.minter;
     minter.is_active = is_active;
-    minter.input_tokens = input_tokens;
-    minter.input_decimals = input_decimals;
-    minter.input_percentages = input_percentages;
-    minter.input_price_feeds = input_price_feeds;
+    minter.input_tokens = input_tokens.clone();
+    minter.input_decimals = input_decimals.clone();
+    minter.input_percentages = input_percentages.clone();
+    minter.input_price_feeds = input_price_feeds.clone();
     minter.fee_percent = fee_percent;
     minter.total_minted_limit = total_minted_limit;
     minter.per_period_minted_limit = per_period_minted_limit;
+
+    emit!(SetMinterEvent {
+      is_active,
+      input_tokens,
+      input_decimals,
+      input_percentages,
+      input_price_feeds,
+      fee_percent,
+      total_minted_limit,
+      per_period_minted_limit,
+    });
 
     Ok(())
   }
@@ -135,6 +148,16 @@ pub mod coin98_dollar_mint_burn {
     burner.fee_percent = fee_percent;
     burner.total_burned_limit = total_burned_limit;
     burner.per_period_burned_limit = per_period_burned_limit;
+
+    emit!(SetBurnerEvent {
+      is_active,
+      output_token,
+      output_decimals,
+      output_price_feed,
+      fee_percent,
+      total_burned_limit,
+      per_period_burned_limit,
+    });
 
     Ok(())
   }
@@ -363,6 +386,11 @@ pub mod coin98_dollar_mint_burn {
       )
       .expect("CUSD Factory: CPI failed.");
 
+    emit!(WithdrawTokenEvent {
+      recipient_token_account: *ctx.accounts.recipient_token.to_account_info().key,
+      amount,
+    });
+
     Ok(())
   }
 
@@ -388,6 +416,11 @@ pub mod coin98_dollar_mint_burn {
         &[&seeds],
       )
       .expect("CUSD Factory: CPI failed.");
+
+    emit!(UnlockTokenMintEvent {
+      token_mint: *token_mint.to_account_info().key,
+      new_authority: *root_signer.key,
+    });
 
     Ok(())
   }
@@ -420,6 +453,10 @@ pub mod coin98_dollar_mint_burn {
 
     let app_data = &mut ctx.accounts.app_data;
     app_data.limit = limit;
+
+    emit!(SetAppDataEvent {
+      limit,
+    });
 
     Ok(())
   }

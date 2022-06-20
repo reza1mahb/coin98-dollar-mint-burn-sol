@@ -7,6 +7,7 @@ use solana_program::{
     AccountInfo,
   },
   declare_id,
+  msg,
 };
 use std::convert::{
   TryFrom,
@@ -34,6 +35,8 @@ pub fn get_price_feed<'i>(
 
   let price = u64::try_from(round.answer).unwrap();
   let precision = u64::pow(10, u32::from(precision));
+
+  msg!("Price fetched: {}/{} at {} in block {}", price, precision, round.timestamp, round.slot);
 
   (price, precision)
 }
