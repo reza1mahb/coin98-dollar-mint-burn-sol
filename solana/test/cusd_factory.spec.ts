@@ -64,7 +64,7 @@ describe('chainlink_dfeed_local_test', function() {
       connection,
       defaultAccount,
       ownerAccount.publicKey,
-      12500000,
+      17000000,
     )
     await SystemProgramService.transfer(
       connection,
@@ -115,7 +115,7 @@ describe('chainlink_dfeed_local_test', function() {
     }
     // Create price feed
     if(await SolanaService.isAddressAvailable(connection, c98PriceFeedAddress)) {
-      await ChainlinkDfeedService.cteateFeed(
+      await ChainlinkDfeedService.createFeed(
         connection,
         defaultAccount,
         'C98-USD',
@@ -128,7 +128,7 @@ describe('chainlink_dfeed_local_test', function() {
       )
     }
     if(await SolanaService.isAddressAvailable(connection, usdcPriceFeedAddress)) {
-      await ChainlinkDfeedService.cteateFeed(
+      await ChainlinkDfeedService.createFeed(
         connection,
         defaultAccount,
         'USDC-USD',
