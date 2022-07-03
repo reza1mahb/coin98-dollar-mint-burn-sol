@@ -296,6 +296,11 @@ pub mod coin98_dollar_mint_burn {
     let chainlink_program = &ctx.accounts.chainlink_program;
     let accounts = &ctx.remaining_accounts;
     let price_feed = &accounts[0];
+
+    if price_feed.key() != burner.output_price_feed {
+      return Err(ErrorCode::InvalidAccount.into());
+    }
+
     let (price, precision) = get_price_feed(
         &*chainlink_program,
         &*price_feed,
