@@ -179,7 +179,7 @@ pub mod coin98_dollar_mint_burn {
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let timestamp_per_period = i64::from(app_data.limit) * 3600;
-    let is_in_period = minter.last_period_timestamp + timestamp_per_period < current_timestamp;
+    let is_in_period = minter.last_period_timestamp + timestamp_per_period > current_timestamp;
     let current_period_minted_amount = if is_in_period { minter.per_period_minted_amount } else { 0u64 };
 
     if current_period_minted_amount + amount > minter.per_period_minted_limit {
@@ -283,7 +283,7 @@ pub mod coin98_dollar_mint_burn {
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let timestamp_per_period = i64::from(app_data.limit) * 3600;
-    let is_in_period = burner.last_period_timestamp + timestamp_per_period < current_timestamp;
+    let is_in_period = burner.last_period_timestamp + timestamp_per_period > current_timestamp;
     let current_period_burned_amount = if is_in_period { burner.per_period_burned_amount } else { 0u64 };
 
     if current_period_burned_amount + amount > burner.per_period_burned_limit {
