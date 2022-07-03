@@ -238,7 +238,7 @@ pub mod coin98_dollar_mint_burn {
 
     let minter = &mut ctx.accounts.minter;
     minter.total_minted_amount = minter.total_minted_amount + amount;
-    minter.per_period_minted_limit = current_period_minted_amount + amount;
+    minter.per_period_minted_amount = current_period_minted_amount + amount;
     if !is_in_period {
       minter.last_period_timestamp = current_timestamp;
     }
@@ -336,7 +336,7 @@ pub mod coin98_dollar_mint_burn {
 
     let burner = &mut ctx.accounts.burner;
     burner.total_burned_amount = burner.total_burned_amount + amount;
-    burner.per_period_burned_limit = current_period_burned_amount + amount;
+    burner.per_period_burned_amount = current_period_burned_amount + amount;
     if !is_in_period {
       burner.last_period_timestamp = current_timestamp;
     }
