@@ -15,6 +15,7 @@ use crate::constant::{
   ROOT_KEYS,
   ROOT_SIGNER_SEED_1,
   ROOT_SIGNER_SEED_2,
+  SYSTEM_FEE_CAP,
 };
 use crate::context::*;
 use crate::error::{
@@ -83,7 +84,7 @@ pub mod coin98_dollar_mint_burn {
     if percentage != 10000 {
       return Err(ErrorCode::InvalidInput.into());
     }
-    if fee_percent > 10000 {
+    if fee_percent > SYSTEM_FEE_CAP {
       return Err(ErrorCode::InvalidInput.into());
     }
 
@@ -136,7 +137,7 @@ pub mod coin98_dollar_mint_burn {
     per_period_burned_limit: u64,
   ) -> Result<()> {
 
-    if fee_percent > 10000 {
+    if fee_percent > SYSTEM_FEE_CAP {
       return Err(ErrorCode::InvalidInput.into());
     }
 
