@@ -8,7 +8,10 @@ use solana_program::{
 #[cfg(feature = "localhost")]
 declare_id!("CXDihKKJfusBgYx9EqfLLYRZJGDRBUVjFmQTGutn9WAZ");
 
-#[cfg(not(feature = "localhost"))]
+#[cfg(feature = "devnet")]
+declare_id!("CXDihKKJfusBgYx9EqfLLYRZJGDRBUVjFmQTGutn9WAZ");
+
+#[cfg(all(not(feature = "localhost"), not(feature = "devnet")))]
 declare_id!("CUSDsY78qAQbDEivJuxzpcpkXYMyW2sg2Mpk4iwFckR4");
 
 pub fn is_cusd_token_mint<'a>(account: &AccountInfo<'a>) -> bool {

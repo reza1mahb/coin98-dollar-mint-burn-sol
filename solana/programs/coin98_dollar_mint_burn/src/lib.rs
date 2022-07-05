@@ -35,7 +35,14 @@ use crate::external::spl_token::{
   TokenAccount,
 };
 
+#[cfg(feature = "localhost")]
 declare_id!("CFvHYH4afBtK97rAwKkZtpnEQGqx8AmS6SWmYZd6JdmE");
+
+#[cfg(feature = "devnet")]
+declare_id!("CF1Xn3Sx1M6KMvtD8zcQBmtDXSFaW7nttRLkYck5f6bR");
+
+#[cfg(all(not(feature = "localhost"), not(feature = "devnet")))]
+declare_id!("CDMBw8drd8Ypct1YDTyJiUHN3KqP9tqtJJxjym5p3muQ");
 
 #[program]
 pub mod coin98_dollar_mint_burn {

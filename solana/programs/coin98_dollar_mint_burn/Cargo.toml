@@ -15,6 +15,7 @@ solana-program = "1.9.13"
 [features]
 cpi = ["no-entrypoint"]
 default = []
+devnet = []
 localhost = []
 no-entrypoint = []
 no-idl = []
