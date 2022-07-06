@@ -7,6 +7,11 @@ use anchor_lang::prelude::{
 };
 
 #[event]
+pub struct CreateMinterEvent {
+  pub is_active: bool,
+}
+
+#[event]
 pub struct SetMinterEvent {
   pub is_active: bool,
   pub input_tokens: Vec<Pubkey>,
@@ -16,6 +21,11 @@ pub struct SetMinterEvent {
   pub fee_percent: u16,
   pub total_minted_limit: u64,
   pub per_period_minted_limit: u64,
+}
+
+#[event]
+pub struct CreateBurnerEvent {
+  pub is_active: bool,
 }
 
 #[event]

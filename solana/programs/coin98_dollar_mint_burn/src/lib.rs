@@ -62,6 +62,10 @@ pub mod coin98_dollar_mint_burn {
     minter.input_percentages = Vec::new();
     minter.input_price_feeds = Vec::new();
 
+    emit!(CreateMinterEvent {
+      is_active: minter.is_active,
+    });
+
     Ok(())
   }
 
@@ -128,6 +132,10 @@ pub mod coin98_dollar_mint_burn {
     let burner = &mut ctx.accounts.burner;
     burner.nonce = *ctx.bumps.get("burner").unwrap();
     burner.is_active = false;
+
+    emit!(CreateBurnerEvent {
+      is_active: burner.is_active,
+    });
 
     Ok(())
   }
