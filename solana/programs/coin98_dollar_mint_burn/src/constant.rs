@@ -3,11 +3,16 @@ pub const ROOT_KEYS: &[&str] = &[
   "8ST8fTBGKaVPx4f1KG1zMMw4EJmSJBW2UgX1JR2pPoVa",
 ];
 
-#[cfg(not(feature = "localhost"))]
+#[cfg(feature = "devnet")]
 pub const ROOT_KEYS: &[&str] = &[
   "EZuvvbVWibGSQpU4urZixQho2hDWtarC9bhT5NVKFpw8",
   "5UrM9csUEDBeBqMZTuuZyHRNhbRW4vQ1MgKJDrKU1U2v",
   "GnzQDYm2gvwZ8wRVmuwVAeHx5T44ovC735vDgSNhumzQ",
+];
+
+#[cfg(all(not(feature = "localhost"), not(feature = "devnet")))]
+pub const ROOT_KEYS: &[&str] = &[
+  "",
 ];
 
 pub const APP_DATA_SEED_1: &[u8] = &[144, 146, 13, 147, 226, 199, 230, 50];

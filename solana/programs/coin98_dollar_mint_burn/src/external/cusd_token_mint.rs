@@ -12,7 +12,7 @@ declare_id!("CXDihKKJfusBgYx9EqfLLYRZJGDRBUVjFmQTGutn9WAZ");
 declare_id!("CXDihKKJfusBgYx9EqfLLYRZJGDRBUVjFmQTGutn9WAZ");
 
 #[cfg(all(not(feature = "localhost"), not(feature = "devnet")))]
-declare_id!("CUSDsY78qAQbDEivJuxzpcpkXYMyW2sg2Mpk4iwFckR4");
+declare_id!("CUSDvqAQLbt7fRofcmV2EXfPA2t36kzj7FjzdmqDiNQL");
 
 pub fn is_cusd_token_mint<'a>(account: &AccountInfo<'a>) -> bool {
   *account.key == ID
