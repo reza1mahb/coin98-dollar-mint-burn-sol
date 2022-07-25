@@ -199,6 +199,9 @@ export class CusdFactoryService {
       connection,
       minterAddress,
     )
+    if(minterInfo == null) {
+      return false
+    }
 
     const transaction = new Transaction()
 
@@ -257,6 +260,9 @@ export class CusdFactoryService {
       connection,
       burnerAddress,
     )
+    if(burnerInfo == null) {
+      return false
+    }
 
     const transaction = new Transaction()
 
@@ -391,8 +397,11 @@ export class CusdFactoryService {
   static async getMinterAccountInfo(
     connection: Connection,
     minterAddress: PublicKey,
-  ): Promise<Minter> {
+  ): Promise<Minter | null> {
     const accountInfo = await connection.getAccountInfo(minterAddress)
+    if(accountInfo == null) {
+      return null
+    }
     const data = CusdFactoryInstructionService.decodeMinterData(accountInfo.data)
     return data
   }
@@ -400,8 +409,11 @@ export class CusdFactoryService {
   static async getBurnerAccountInfo(
     connection: Connection,
     burnerAddress: PublicKey,
-  ): Promise<Burner> {
+  ): Promise<Burner | null> {
     const accountInfo = await connection.getAccountInfo(burnerAddress)
+    if(accountInfo == null) {
+      return null
+    }
     const data = CusdFactoryInstructionService.decodeBurnerData(accountInfo.data)
     return data
   }

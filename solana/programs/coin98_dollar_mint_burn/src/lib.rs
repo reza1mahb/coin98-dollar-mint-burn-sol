@@ -12,6 +12,7 @@ use solana_program::{
   },
 };
 use crate::constant::{
+  CUSD_PRECISION,
   ROOT_KEYS,
   ROOT_SIGNER_SEED_1,
   ROOT_SIGNER_SEED_2,
@@ -178,9 +179,9 @@ pub mod coin98_dollar_mint_burn {
     Ok(())
   }
 
-  pub fn mint<'a>(
+pub fn mint<'a>(
     ctx: Context<'_, '_, '_, 'a, MintContext<'a>>,
-    amount: u64,
+    amount: u64, // amount of CUSD user want to mint
     extra_instructions: Vec<u8>,
   ) -> Result<()> {
 
@@ -189,6 +190,9 @@ pub mod coin98_dollar_mint_burn {
     let root_signer = &ctx.accounts.root_signer;
     let minter = &ctx.accounts.minter;
 
+    if amount == 0 {
+      return Err(ErrorCode::InvalidInput.into());
+    }
     if !minter.is_active {
       return Err(ErrorCode::Unavailable.into());
     }
@@ -228,6 +232,8 @@ pub mod coin98_dollar_mint_burn {
 
       let input_vaule = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap();
       let input_amount = multiply_fraction(input_vaule, precision, price);
+      let input_precision = u64::pow(10, u32::from(minter.input_decimals[i]));
+      let input_amount = multiply_fraction(input_amount, input_precision, CUSD_PRECISION);
 
       let from_account_index = account_indices[3*i + 1];
       let to_account_index = account_indices[3*i + 2];
@@ -286,13 +292,19 @@ pub mod coin98_dollar_mint_burn {
 
   pub fn burn<'a>(
     ctx: Context<'_, '_, '_, 'a, BurnContext<'a>>,
-    amount: u64,
+    amount: u64, // amount of output_token user want to burn
   ) -> Result<()> {
 
     let user = &ctx.accounts.user;
     let app_data = &ctx.accounts.app_data;
     let burner = &ctx.accounts.burner;
+    let chainlink_program = &ctx.accounts.chainlink_program;
+    let accounts = &ctx.remaining_accounts;
+    let price_feed = &accounts[0];
 
+    if amount == 0 {
+      return Err(ErrorCode::InvalidInput.into());
+    }
     if !burner.is_active {
       return Err(ErrorCode::Unavailable.into());
     }
@@ -302,26 +314,24 @@ pub mod coin98_dollar_mint_burn {
     let is_in_period = burner.last_period_timestamp + timestamp_per_period > current_timestamp;
     let current_period_burned_amount = if is_in_period { burner.per_period_burned_amount } else { 0u64 };
 
-    if current_period_burned_amount + amount > burner.per_period_burned_limit {
-      return Err(ErrorCode::LimitReached.into());
-    }
-    if burner.total_burned_amount + amount > burner.total_burned_limit {
-      return Err(ErrorCode::LimitReached.into());
-    }
+    let (price, precision) = get_price_feed(
+      &*chainlink_program,
+      &*price_feed,
+    );
+    let cusd_amount = multiply_fraction(amount, price, precision);
+    let output_precision = u64::pow(10, u32::from(burner.output_decimals));
+    let cusd_amount = multiply_fraction(cusd_amount, CUSD_PRECISION, output_precision);
 
-    let chainlink_program = &ctx.accounts.chainlink_program;
-    let accounts = &ctx.remaining_accounts;
-    let price_feed = &accounts[0];
+    if current_period_burned_amount + cusd_amount > burner.per_period_burned_limit {
+      return Err(ErrorCode::LimitReached.into());
+    }
+    if burner.total_burned_amount + cusd_amount > burner.total_burned_limit {
+      return Err(ErrorCode::LimitReached.into());
+    }
 
     if price_feed.key() != burner.output_price_feed {
       return Err(ErrorCode::InvalidAccount.into());
     }
-
-    let (price, precision) = get_price_feed(
-        &*chainlink_program,
-        &*price_feed,
-      );
-    let output_amount = multiply_fraction(amount, precision, price);
 
     let pool_cusd = &ctx.accounts.pool_cusd;
     let user_cusd = &ctx.accounts.user_cusd;
@@ -329,7 +339,7 @@ pub mod coin98_dollar_mint_burn {
         &*user,
         &user_cusd.to_account_info(),
         &pool_cusd.to_account_info(),
-        amount,
+        cusd_amount,
         &[],
       )
       .expect("CUSD Factory: CPI failed.");
@@ -345,19 +355,19 @@ pub mod coin98_dollar_mint_burn {
         &*root_signer,
         &*cusd_mint,
         &pool_cusd.to_account_info(),
-        amount,
+        cusd_amount,
         &[&seeds],
       )
       .expect("CUSD Factory: CPI failed.");
 
     let burner = &mut ctx.accounts.burner;
-    burner.total_burned_amount = burner.total_burned_amount + amount;
-    burner.per_period_burned_amount = current_period_burned_amount + amount;
+    burner.total_burned_amount = burner.total_burned_amount + cusd_amount;
+    burner.per_period_burned_amount = current_period_burned_amount + cusd_amount;
     if !is_in_period {
       burner.last_period_timestamp = current_timestamp;
     }
-    let protocol_fee = multiply_fraction(output_amount, u64::from(burner.fee_percent), 10000);
-    let amount_to_transfer = output_amount.checked_sub(protocol_fee).unwrap();
+    let protocol_fee = multiply_fraction(amount, u64::from(burner.fee_percent), 10000);
+    let amount_to_transfer = amount.checked_sub(protocol_fee).unwrap();
     burner.accumulated_fee = burner.accumulated_fee.checked_add(protocol_fee).unwrap();
 
     let pool_token = &accounts[1];
