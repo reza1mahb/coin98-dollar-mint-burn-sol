@@ -1,0 +1,26 @@
+[package]
+name = "coin98-dollar-mint-burn"
+version = "0.1.0"
+authors = ["coin98"]
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+anchor-lang = "0.24.2"
+arrayref = "0.3.6"
+chainlink_solana = "1.0.0"
+num_enum = "0.5.4"
+solana-program = "1.9.13"
+
+[features]
+cpi = ["no-entrypoint"]
+default = []
+devnet = []
+localhost = []
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+
+[lib]
+name = "coin98_dollar_mint_burn"
+crate-type = ["cdylib", "lib"]
