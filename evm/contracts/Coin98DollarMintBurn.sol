@@ -1130,6 +1130,8 @@ contract Coin98DollarMintBurn is Ownable {
             .div(10**priceDecimals)
             .div(10**burner.decimals);
 
+        require(amountToBurn > 0, "Coin98DollarMintBurn: Amount must be a positive number and greater than zero");
+
         uint256 currentTotalBurnedToday = checkTotalBurned(
             burner,
             amountToBurn
