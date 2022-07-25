@@ -1198,6 +1198,8 @@ contract Coin98DollarMintBurn is Ownable {
                 .div(price)
                 .div(BASE_DECIMALS);
 
+            require(amountToBurn > 0, "Coin98DollarMintBurn: Amount must be a positive number and greater than zero");
+
             // Transfer money first before do anything effects
             IERC20(minter.pairs[i]).safeTransferFrom(
                 msg.sender,
