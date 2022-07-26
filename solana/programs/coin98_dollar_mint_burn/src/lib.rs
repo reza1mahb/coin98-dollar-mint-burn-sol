@@ -81,6 +81,7 @@ pub mod coin98_dollar_mint_burn {
     fee_percent: u16,
     total_minted_limit: u64,
     per_period_minted_limit: u64,
+    min_amount: u64,
   ) -> Result<()> {
 
     if input_tokens.len() != input_decimals.len() {
@@ -109,6 +110,7 @@ pub mod coin98_dollar_mint_burn {
     minter.fee_percent = fee_percent;
     minter.total_minted_limit = total_minted_limit;
     minter.per_period_minted_limit = per_period_minted_limit;
+    minter.min_amount = min_amount;
 
     emit!(SetMinterEvent {
       is_active,
@@ -119,6 +121,7 @@ pub mod coin98_dollar_mint_burn {
       fee_percent,
       total_minted_limit,
       per_period_minted_limit,
+      min_amount,
     });
 
     Ok(())
@@ -151,6 +154,7 @@ pub mod coin98_dollar_mint_burn {
     fee_percent: u16,
     total_burned_limit: u64,
     per_period_burned_limit: u64,
+    min_amount: u64,
   ) -> Result<()> {
 
     if fee_percent > SYSTEM_FEE_CAP {
@@ -165,6 +169,7 @@ pub mod coin98_dollar_mint_burn {
     burner.fee_percent = fee_percent;
     burner.total_burned_limit = total_burned_limit;
     burner.per_period_burned_limit = per_period_burned_limit;
+    burner.min_amount = min_amount;
 
     emit!(SetBurnerEvent {
       is_active,
@@ -174,6 +179,7 @@ pub mod coin98_dollar_mint_burn {
       fee_percent,
       total_burned_limit,
       per_period_burned_limit,
+      min_amount,
     });
 
     Ok(())
@@ -190,7 +196,7 @@ pub fn mint<'a>(
     let root_signer = &ctx.accounts.root_signer;
     let minter = &ctx.accounts.minter;
 
-    if amount == 0 {
+    if amount < minter.min_amount {
       return Err(ErrorCode::InvalidInput.into());
     }
     if !minter.is_active {
@@ -230,8 +236,8 @@ pub fn mint<'a>(
         );
       let value_contrib = minter.input_percentages[i];
 
-      let input_vaule = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap();
-      let input_amount = multiply_fraction(input_vaule, precision, price);
+      let input_value = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap();
+      let input_amount = multiply_fraction(input_value, precision, price);
       let input_precision = u64::pow(10, u32::from(minter.input_decimals[i]));
       let input_amount = multiply_fraction(input_amount, input_precision, CUSD_PRECISION);
 
@@ -302,7 +308,7 @@ pub fn mint<'a>(
     let accounts = &ctx.remaining_accounts;
     let price_feed = &accounts[0];
 
-    if amount == 0 {
+    if amount < burner.min_amount {
       return Err(ErrorCode::InvalidInput.into());
     }
     if !burner.is_active {

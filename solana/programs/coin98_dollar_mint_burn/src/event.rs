@@ -21,6 +21,7 @@ pub struct SetMinterEvent {
   pub fee_percent: u16,
   pub total_minted_limit: u64,
   pub per_period_minted_limit: u64,
+  pub min_amount: u64,
 }
 
 #[event]
@@ -37,6 +38,7 @@ pub struct SetBurnerEvent {
   pub fee_percent: u16,
   pub total_burned_limit: u64,
   pub per_period_burned_limit: u64,
+  pub min_amount: u64,
 }
 
 #[event]

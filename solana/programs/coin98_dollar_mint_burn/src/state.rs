@@ -26,12 +26,13 @@ pub struct Minter {
   pub per_period_minted_amount: u64,
   pub per_period_minted_limit: u64,
   pub last_period_timestamp: i64,
+  pub min_amount: u64,
 }
 
 impl Minter {
   pub fn size(token_count: u8) -> usize {
     let token_count = usize::from(token_count);
-    1 + 1 + (4 + 32 * token_count) + (4 + 2 * token_count) + (4 + 2 * token_count) + (4 + 32 * token_count) + 2 + 8 + 8 + 8 + 8 + 8 + 8
+    1 + 1 + (4 + 32 * token_count) + (4 + 2 * token_count) + (4 + 2 * token_count) + (4 + 32 * token_count) + 2 + 8 + 8 + 8 + 8 + 8 + 8 + 8
   }
 }
 
@@ -49,8 +50,9 @@ pub struct Burner {
   pub per_period_burned_amount: u64,
   pub per_period_burned_limit: u64,
   pub last_period_timestamp: i64,
+  pub min_amount: u64,
 }
 
 impl Burner {
-  pub const LEN: usize = 1 + 1 + 32 + 2 + 32 + 2 + 8 + 8 + 8 + 8 + 8 + 8;
+  pub const LEN: usize = 1 + 1 + 32 + 2 + 32 + 2 + 8 + 8 + 8 + 8 + 8 + 8 + 8;
 }
