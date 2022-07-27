@@ -10,6 +10,7 @@ use solana_program::{
   program_pack::{
     Pack,
   },
+  system_program,
 };
 use crate::constant::{
   CUSD_PRECISION,
@@ -226,14 +227,23 @@ pub fn mint<'a>(
 
     for (i, input_token) in minter.input_tokens.iter().enumerate() {
       let input_price_feed = &minter.input_price_feeds[i];
-      let price_feed = &accounts[3*i];
-      if price_feed.key() != *input_price_feed {
-        return Err(ErrorCode::InvalidAccount.into());
+      let (mut price, mut precision) = (1u64, 1u64);
+      let use_price_feed = *input_price_feed != system_program::ID;
+      if use_price_feed {
+        let price_feed = &accounts[3*i];
+        if price_feed.key() != *input_price_feed {
+          return Err(ErrorCode::InvalidAccount.into());
+        }
+        (price, precision) = get_price_feed(
+            &*chainlink_program,
+            &*price_feed,
+          );
       }
-      let (price, precision) = get_price_feed(
-          &*chainlink_program,
-          &*price_feed,
-        );
+      else {
+        let clock = Clock::get().unwrap();
+        msg!("Price fetched: {}/{} at {} in block {}", price, precision, clock.unix_timestamp, clock.slot);
+      }
+
       let value_contrib = minter.input_percentages[i];
 
       let input_value = amount.checked_mul(u64::from(value_contrib)).unwrap().checked_div(10000).unwrap();
@@ -320,10 +330,22 @@ pub fn mint<'a>(
     let is_in_period = burner.last_period_timestamp + timestamp_per_period > current_timestamp;
     let current_period_burned_amount = if is_in_period { burner.per_period_burned_amount } else { 0u64 };
 
-    let (price, precision) = get_price_feed(
-      &*chainlink_program,
-      &*price_feed,
-    );
+    let (mut price, mut precision) = (1u64, 1u64);
+    let use_price_feed = burner.output_price_feed != system_program::ID;
+    if use_price_feed {
+      if price_feed.key() != burner.output_price_feed {
+        return Err(ErrorCode::InvalidAccount.into());
+      }
+      (price, precision) = get_price_feed(
+        &*chainlink_program,
+        &*price_feed,
+      );
+    }
+    else {
+      let clock = Clock::get().unwrap();
+      msg!("Price fetched: {}/{} at {} in block {}", price, precision, clock.unix_timestamp, clock.slot);
+    }
+
     let cusd_amount = multiply_fraction(amount, price, precision);
     let output_precision = u64::pow(10, u32::from(burner.output_decimals));
     let cusd_amount = multiply_fraction(cusd_amount, CUSD_PRECISION, output_precision);
@@ -333,10 +355,6 @@ pub fn mint<'a>(
     }
     if burner.total_burned_amount + cusd_amount > burner.total_burned_limit {
       return Err(ErrorCode::LimitReached.into());
-    }
-
-    if price_feed.key() != burner.output_price_feed {
-      return Err(ErrorCode::InvalidAccount.into());
     }
 
     let pool_cusd = &ctx.accounts.pool_cusd;
