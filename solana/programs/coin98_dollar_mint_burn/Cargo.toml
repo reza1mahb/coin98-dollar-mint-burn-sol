@@ -14,6 +14,7 @@ solana-program = "1.9.13"
 
 [features]
 cpi = ["no-entrypoint"]
+unit-test = []
 default = []
 devnet = []
 localhost = []
@@ -24,3 +25,14 @@ no-log-ix-name = []
 [lib]
 name = "coin98_dollar_mint_burn"
 crate-type = ["cdylib", "lib"]
+
+[dev-dependencies]
+env_logger="~0.9.0"
+solana-program = "1.9.15"
+solana-program-test = "~1.9.15"
+solana-sdk = "~1.9.15"
+solana-cli-config = "1.9.5"
+rand = "0.8.5"
+spl-associated-token-account = { version = "~1.0.3",  features = ["no-entrypoint"] }
+spl-token = { version = "~3.2",  features = ["no-entrypoint"] }
+chainlink-dfeed = { version = "0.1.0", path = "../../../../solana-chainlink-dfeed/programs/chainlink_dfeed"  }
