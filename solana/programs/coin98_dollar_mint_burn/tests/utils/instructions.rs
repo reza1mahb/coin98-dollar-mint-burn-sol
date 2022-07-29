@@ -228,7 +228,7 @@ pub fn create_app_data_instruction(
 ) -> Instruction {
     let (app_data, _): (Pubkey, u8) = find_app_data_address();
 
-    let mut accounts = coin98_dollar_mint_burn::accounts::CreateAppDataContext {
+    let accounts = coin98_dollar_mint_burn::accounts::CreateAppDataContext {
         root: *root,
         app_data,
         system_program: system_program::id()
@@ -253,13 +253,73 @@ pub fn set_app_data_instruction(
 ) -> Instruction {
     let (app_data, _): (Pubkey, u8) = find_app_data_address();
 
-    let mut accounts = coin98_dollar_mint_burn::accounts::SetAppDataContext {
+    let accounts = coin98_dollar_mint_burn::accounts::SetAppDataContext {
         root: *root,
         app_data,
     }.to_account_metas(None);
 
     let data = coin98_dollar_mint_burn::instruction::SetAppData {
         limit
+    }
+    .data();
+
+    let instruction = Instruction {
+        program_id: coin98_dollar_mint_burn::id(),
+        data,
+        accounts
+    };
+
+    instruction
+}
+
+pub fn withdraw_token_instruction(
+    root: &Pubkey,
+    pool_token: &Pubkey,
+    recipient_token: &Pubkey,
+    amount: u64
+) -> Instruction {
+    let (app_data, _): (Pubkey, u8) = find_app_data_address();
+    let (root_signer, _): (Pubkey, u8) = find_root_signer_address();
+
+    let accounts = coin98_dollar_mint_burn::accounts::WithdrawTokenContext {
+        root: *root,
+        app_data,
+        root_signer,
+        pool_token: *pool_token,
+        recipient_token: *recipient_token,
+        token_program: TOKEN_PROGRAM_ID
+    }.to_account_metas(None);
+
+    let data = coin98_dollar_mint_burn::instruction::WithdrawToken {
+        amount,
+    }
+    .data();
+
+    let instruction = Instruction {
+        program_id: coin98_dollar_mint_burn::id(),
+        data,
+        accounts
+    };
+
+    instruction
+}
+
+pub fn unlock_token_mint_instruction(
+    root: &Pubkey,
+    token_mint: &Pubkey
+) -> Instruction {
+    let (app_data, _): (Pubkey, u8) = find_app_data_address();
+    let (root_signer, _): (Pubkey, u8) = find_root_signer_address();
+
+    let accounts = coin98_dollar_mint_burn::accounts::UnlockTokenMintContext {
+        root: *root,
+        app_data,
+        root_signer,
+        token_mint: *token_mint,
+        token_program: TOKEN_PROGRAM_ID
+    }.to_account_metas(None);
+
+    let data = coin98_dollar_mint_burn::instruction::UnlockTokenMint {
     }
     .data();
 

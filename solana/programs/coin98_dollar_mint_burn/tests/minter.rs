@@ -1,8 +1,6 @@
 #![cfg(feature = "unit-test")]
 pub mod utils;
 
-use anchor_lang::*;
-use std::{assert_eq, result::Result};
 pub use solana_sdk::{
     pubkey::Pubkey,
     instruction::InstructionError,
@@ -10,7 +8,7 @@ pub use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use solana_program_test::{*, ProgramTestContext};
+use solana_program_test::*;
 use std::time::*;
 use utils::helper::*;
 use utils::wallet::*;

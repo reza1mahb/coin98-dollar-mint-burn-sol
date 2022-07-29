@@ -1,6 +1,6 @@
 use anchor_lang::*;
 use anchor_lang::solana_program::system_program;
-use solana_program::instruction::{Instruction, AccountMeta};
+use solana_program::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 
 const FEED_SEEDS: &[u8] = &[57, 108, 60, 177, 143, 129, 26, 24];
