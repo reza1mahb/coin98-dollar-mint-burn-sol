@@ -1,6 +1,6 @@
 {
-  "name": "coin98-dollar-mint-burn",
-  "version": "0.1.0",
+  "name": "cusd-factory-js",
+  "version": "1.1.0",
   "description": "Solana program for minting and redeeming CUSD",
   "main": "index.js",
   "author": "Coin98",
@@ -18,7 +18,7 @@
     "url": "git+https://github.com/coin98/coin98-dollar-mint-burn.git"
   },
   "dependencies": {
-    "@coin98/solana-support-library": "^0.3.0",
+    "@coin98/solana-support-library": "^0.3.1",
     "@project-serum/anchor": "^0.24.2",
     "@solana/web3.js": "^1.43.1",
     "bn.js": "^5.2.1"
