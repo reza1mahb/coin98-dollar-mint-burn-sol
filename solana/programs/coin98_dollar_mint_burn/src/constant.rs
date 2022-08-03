@@ -10,7 +10,14 @@ pub const ROOT_KEYS: &[&str] = &[
   "GnzQDYm2gvwZ8wRVmuwVAeHx5T44ovC735vDgSNhumzQ",
 ];
 
-#[cfg(all(not(feature = "localhost"), not(feature = "devnet")))]
+#[cfg(feature = "unit-test")]
+pub const ROOT_KEYS: &[&str] = &[
+  "EZuvvbVWibGSQpU4urZixQho2hDWtarC9bhT5NVKFpw8",
+  "5UrM9csUEDBeBqMZTuuZyHRNhbRW4vQ1MgKJDrKU1U2v",
+  "GnzQDYm2gvwZ8wRVmuwVAeHx5T44ovC735vDgSNhumzQ",
+];
+
+#[cfg(all(not(feature = "localhost"), not(feature = "devnet"), not(feature = "unit-test")))]
 pub const ROOT_KEYS: &[&str] = &[
   ""
 ];

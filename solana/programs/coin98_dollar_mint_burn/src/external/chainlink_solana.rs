@@ -16,7 +16,10 @@ use std::convert::{
 #[cfg(feature = "localhost")]
 declare_id!("DFeedTiF3G7eojEqc7KuqJFbBD3idV9y7i6Q7LxKtF7e");
 
-#[cfg(not(feature = "localhost"))]
+#[cfg(feature = "unit-test")]
+declare_id!("DFeedTiF3G7eojEqc7KuqJFbBD3idV9y7i6Q7LxKtF7e");
+
+#[cfg(all(not(feature = "localhost"), not(feature = "devnet"), not(feature = "unit-test")))]
 declare_id!("HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny");
 
 pub fn get_price_feed<'i>(
