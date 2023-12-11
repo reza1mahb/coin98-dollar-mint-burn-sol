@@ -129,7 +129,7 @@ export class CusdFactoryService {
       derivationPath,
       cusdFactoryProgramId,
     )
-    const setMinterInstruction = CusdFactoryInstructionService.setBurner(
+    const setBurnerInstruction = CusdFactoryInstructionService.setBurner(
       payerAccount.publicKey,
       burnerAddress,
       isActive,
@@ -139,7 +139,7 @@ export class CusdFactoryService {
       perPeriodBurnedLimit,
       cusdFactoryProgramId,
     )
-    transaction.add(setMinterInstruction)
+    transaction.add(setBurnerInstruction)
 
     const txSign = await sendTransaction(connection, transaction, [
       payerAccount,
